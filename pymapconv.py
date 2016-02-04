@@ -3,7 +3,7 @@
 # You like pasghetti code? No problem, you get pasghetti code.
 import sys
 import struct
-import Image
+from PIL import Image
 import png
 import random
 import argparse
