@@ -293,9 +293,9 @@ def compileSMF(myargs):
 			myfeature={'name':'','x':0.0,'y':0.0,'z':0.0,'rot':0.0,'scale':1.0}
 			for block in line:
 				if '=' in block:
-					line=line.partition('=')
-					key=line[0].strip(' {}\'\"').lower()
-					val=line[2].strip(' {}\'\"')
+					block=line.partition('=')
+					key=block[0].strip(' {}\'\"').lower()
+					val=block[2].strip(' {}\'\"')
 					if key =='name':
 						myfeature[key]=val
 						if val not in featuretypes:
