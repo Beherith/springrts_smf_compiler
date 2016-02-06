@@ -497,6 +497,7 @@ def compileSMF(myargs):
 						print x,y, tilex,tiley,tileindex
 						return
 					tileindices[tilepos]=tilehash[tile]
+			ddsfile.close()
 	print 'Lossless compression tiles: %i / %i'%(len(tilehash),256*springmapx*springmapy)
 
 	print 'writing tile file'
