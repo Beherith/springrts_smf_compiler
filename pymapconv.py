@@ -458,13 +458,13 @@ def compileSMF(myargs):
 		return outtile
 
 
-	minimapfilename='mini.bmp'
+	minimapfilename='mini.tiff'
 	print 'Creating minimap',minimapfilename
 	if myargs.minimap:
 		minimapfilename=myargs.minimap
 	else:
 		mini=intex.resize((1024,1024),Image.ANTIALIAS)
-		mini.save('mini.bmp')
+		mini.save(minimapfilename)
 	if myargs.linux:
 		cmd='convert -format dds -define dds:mipmaps=9 -define dds:compression=dxt1 %s mini.dds'%(minimapfilename)
 		os.system(cmd)
@@ -736,7 +736,7 @@ class SMFMapDecompiler:
 			tileoffset+=4 #sizeof(int)
 			tilefilename=unpack_null_terminated_string(self.smffile,tileoffset)
 			tileoffset+=len(tilefilename)+1 #cause of null terminator
-			self.tilefiles.append([tilefilename,numtilesinfile,open(tilefilename,'rb').read()])
+			self.tilefiles.append([tilefilename,numtilesinfile,open(filename.rpartition('\\')[0]+'\\'+tilefilename,'rb').read()])
 			print tilefilename, 'has',numtilesinfile,'tiles'
 		self.tileindices=struct.unpack_from('< %ii'%((self.mapx/4)*(self.mapy/4)),self.smffile,tileoffset)
 
