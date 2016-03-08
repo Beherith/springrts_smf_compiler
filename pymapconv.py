@@ -568,11 +568,12 @@ def compileSMF(myargs):
 		smffile.write(MapFeatureStruct_struct.pack(featuretypes.index(f['name']),f['x'],f['y'],f['z'],f['rot'],f['scale']))
 	smffile.close()
 
-	print 'Cleaning up temp dir'
+	print 'Cleaning up temp dir...'
 	if myargs.linux:
 		os.system('rm -r ./temp')
 	else:
 		os.system('del /Q temp')
+	print 'All Done! You may now close the main window to exit the program :)'
 
 class SMFMapDecompiler:
 	def __init__(self,filename):
