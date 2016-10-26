@@ -427,7 +427,7 @@ def compileSMF(myargs):
 			tileindex=tiley*(springmapx/2)+tilex
 			newtile=intex.crop((1024*tilex, 1024*tiley, 1024*(tilex+1),1024*(tiley+1))) # The box is a 4-tuple defining the left, upper, right, and lower pixel coordinate.
 			print '.',
-			newtile.save('temp\\temp%i.%s'%(tileindex,extension))
+			newtile.save(os.path.join('temp','temp%i.%s'%(tileindex,extension)))
 	print ''
 
 	print 'Converting to dds',
@@ -435,7 +435,7 @@ def compileSMF(myargs):
 		for tilex in range(springmapx/2):
 			for tiley in range(springmapx/2):
 				tileindex=tiley*(springmapx/2)+tilex
-				cmd='convert -format dds -define dds:mipmaps=3 -define dds:compression=dxt1 temp\\temp%i.%s temp%i.dds'%(tileindex,extension,tileindex)
+				cmd='convert -format dds -define dds:mipmaps=3 -define dds:compression=dxt1 temp/temp%i.%s temp/temp%i.dds'%(tileindex,extension,tileindex)
 				os.system(cmd)
 				print '.',
 	else:
@@ -482,7 +482,7 @@ def compileSMF(myargs):
 	for tilex in range(springmapx/2):
 		for tiley in range(springmapx/2):
 			tileindex=tiley*(springmapx/2)+tilex
-			ddsfile=open('temp\\temp%i.dds'%(tileindex),'rb')
+			ddsfile=open(os.path.join('temp', 'temp%i.dds' % (tileindex)),'rb')
 			ddsdata=ddsfile.read()[128:]
 			for x in range(32):
 				for y in range(32):
