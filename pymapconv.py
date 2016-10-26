@@ -458,7 +458,7 @@ def compileSMF(myargs):
 		return outtile
 
 
-	minimapfilename='mini.tiff'
+	minimapfilename=os.path.join('temp', 'mini.tiff')
 	print 'Creating minimap',minimapfilename
 	if myargs.minimap:
 		minimapfilename=myargs.minimap
@@ -466,11 +466,11 @@ def compileSMF(myargs):
 		mini=intex.resize((1024,1024),Image.ANTIALIAS)
 		mini.save(minimapfilename)
 	if myargs.linux:
-		cmd='convert -format dds -define dds:mipmaps=9 -define dds:compression=dxt1 %s mini.dds'%(minimapfilename)
+		cmd='convert -format dds -define dds:mipmaps=9 -define dds:compression=dxt1 %s temp/mini.dds' % (minimapfilename)
 		os.system(cmd)
 	else:
-		os.system('nvdxt.exe -file %s -dxt1c -nmips 9 -Sinc -quality_highest'%(minimapfilename))
-	minimapdata=open('mini.dds','rb').read()[128:]
+		os.system('nvdxt.exe -file %s -dxt1c -nmips 9 -Sinc -quality_highest' % (minimapfilename))
+	minimapdata=open(os.path.join('temp', 'mini.dds'),'rb').read()[128:]
 
 	intex=None
 	gc.collect()
