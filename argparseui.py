@@ -362,7 +362,7 @@ class ArgparseUi(QtGui.QDialog):
             else:
                 return []
         return to_command_line
-    
+
     def makeStoreActionEntry(self, a, optional=True):
         """
         make a dialog entry for a StoreAction entry
@@ -399,21 +399,42 @@ class ArgparseUi(QtGui.QDialog):
                 lineedit.setText("{0}".format(a.default))
             if validator is not None:
                 lineedit.setValidator(validator(self))
-            
+
             if optional:
                 include = QtGui.QCheckBox(comb(helpstring, typehelp), self.options)
                 enabled = a.default is not None
                 include.setChecked(enabled)
                 self.disableOnClick(lineedit)(enabled)
-                include.clicked.connect(self.disableOnClick(lineedit))        
+                include.clicked.connect(self.disableOnClick(lineedit))
                 self.registerDisplayStateInfo(a.dest, [include])
             else:
                 include = QtGui.QLabel(comb(helpstring, typehelp), self.options)
-                
+
             self.registerDisplayStateInfo(a.dest, [lineedit])
             self.commandLineArgumentCreators.append(self.createFunctionToMakeStoreEntryCommandLine(include, lineedit, a))
-            self.optionsLayout.addRow(include, lineedit)
-            
+
+            #Yay for the following example of why I suck at OO concepts:
+            if a.type == str:
+                btn = self.addButton("Select file")
+                btn.lineedit = lineedit
+                btn.include = include
+
+                def openAFile():
+                    filename = QtGui.QFileDialog.getOpenFileName()
+                    if filename:
+                        btn.lineedit.setText(filename)
+                        btn.lineedit.setEnabled(True)
+                        btn.include.setChecked(True)
+                btn.clickyclicky = openAFile
+                btn.clicked.connect(btn.clickyclicky)
+                hBox =  QtGui.QHBoxLayout()
+                hBox.addWidget(lineedit)
+                hBox.addWidget(btn)
+                self.optionsLayout.addRow(include, hBox)
+                #self.optionsLayout.addRow(include, lineedit)
+            else:
+                self.optionsLayout.addRow(include, lineedit)
+
     def createFunctionToMakeStoreEntryCommandLine(self, include_widget, value_widget, argument):
         """
         function to create a function that generates a command line string,
