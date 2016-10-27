@@ -493,7 +493,7 @@ def compileSMF(myargs):
 			sourceoffset += 524288 / (1 << (i * 2))
 		return outtile
 
-	minimapfilename = os.path.join('temp', 'mini.tiff')
+	minimapfilename = os.path.join('temp', 'mini.png')
 	print 'Creating minimap', minimapfilename,'using the command:',
 	if myargs.minimap:
 		minimapfilename = myargs.minimap
@@ -501,7 +501,7 @@ def compileSMF(myargs):
 		mini = intex.resize((1024, 1024), Image.ANTIALIAS)
 		mini.save(minimapfilename)
 	if myargs.linux:
-		cmd = 'convert -format dds -define dds:mipmaps=9 -define dds:compression=dxt1 %s temp/mini.dds' % (
+		cmd = 'convert -format dds -define dds:mipmaps=8 -define dds:compression=dxt1 %s temp/mini.dds' % (
 		minimapfilename)
 		print cmd
 		os.system(cmd)
@@ -791,7 +791,8 @@ class SMFMapDecompiler:
 			tilefilename = unpack_null_terminated_string(self.smffile, tileoffset)
 			tileoffset += len(tilefilename) + 1  # cause of null terminator
 			self.tilefiles.append(
-				[tilefilename, numtilesinfile, open(filename.rpartition('\\')[0] + '\\' + tilefilename, 'rb').read()])
+				#[tilefilename, numtilesinfile, open(filename.rpartition('\\')[0] + '\\' + tilefilename, 'rb').read()])
+				[tilefilename, numtilesinfile, open(tilefilename, 'rb').read()])
 			print tilefilename, 'has', numtilesinfile, 'tiles'
 		self.tileindices = struct.unpack_from('< %ii' % ((self.mapx / 4) * (self.mapy / 4)), self.smffile, tileoffset)
 
