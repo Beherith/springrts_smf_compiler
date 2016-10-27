@@ -607,9 +607,11 @@ def compileSMF(myargs):
 
 	print 'Cleaning up temp dir...'
 	if myargs.linux:
-		os.system('rm -r ./temp')
+		#os.system('rm -r ./temp')
+		pass
 	else:
-		os.system('del /Q temp')
+		#os.system('del /Q temp')
+		pass
 	print 'All Done! You may now close the main window to exit the program :)'
 
 
@@ -902,7 +904,6 @@ if __name__ == "__main__":
 	parser.add_argument('-d', '--decompile', help='Decompiles a map to everything you need to recompile it', type=str)
 	parser.description = 'Spring RTS SMF map compiler/decompiler by Beherith (mysterme@gmail.com). You must select at least a texture and a heightmap for compilation'
 	parser.epilog = 'Remember, you can also use this from the command line!'
-	app = QtGui.QApplication(sys.argv)
 
 
 	def okbuttonhandler(self):
@@ -912,26 +913,28 @@ if __name__ == "__main__":
 			mymap = SMFMapDecompiler(parsed_args.decompile)
 		else:
 			compileSMF(parsed_args)
-
 	#print 'sys.argv:',sys.argv
 	if len(sys.argv) > 1: # if we got command line, then just run without gui
 		okbuttonhandler(parser)
 		exit(1)
-	a = argparseui.ArgparseUi(parser, left_label_alignment=True, use_scrollbars=True, use_save_load_button=True,
-							  ok_button_handler=okbuttonhandler,
-							  window_title="Spring Map Format (SMF) compiler and decompiler")
-	a.show()
-	app.exec_()
-	print ("Ok" if a.result() == 1 else "Cancel")
-	if a.result() == 1:  # Ok pressed
-		parsed_args = a.parse_args()
-		print (parsed_args)
-		if parsed_args.decompile != '' and parsed_args.decompile != None:
-			mymap = SMFMapDecompiler(parsed_args.decompile)
-		else:
-			compileSMF(parsed_args)
 	else:
-		parsed_args = None
+
+		app = QtGui.QApplication(sys.argv)
+		a = argparseui.ArgparseUi(parser, left_label_alignment=True, use_scrollbars=True, use_save_load_button=True,
+								  ok_button_handler=okbuttonhandler,
+								  window_title="Spring Map Format (SMF) compiler and decompiler")
+		a.show()
+		app.exec_()
+		print ("Ok" if a.result() == 1 else "Cancel")
+		if a.result() == 1:  # Ok pressed
+			parsed_args = a.parse_args()
+			print (parsed_args)
+			if parsed_args.decompile != '' and parsed_args.decompile != None:
+				mymap = SMFMapDecompiler(parsed_args.decompile)
+			else:
+				compileSMF(parsed_args)
+		else:
+			parsed_args = None
 
 '''
    -k <feature placement file>,  --featureplacement <feature placement
