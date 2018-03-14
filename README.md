@@ -5,13 +5,15 @@ https://springrts.com/
 
 To use the tool, launch pymapconv.py
 
-Under Windows, you will need the following to make this work:
+#### Under Windows, you will need the following to make this work:
 
-Requires python 2.7 - (no surprise there) 32bit https://www.python.org/downloads/
-Requires PIL - (Python Image Library) http://www.pythonware.com/products/pil/
-Requires PyQt4 - https://riverbankcomputing.com/software/pyqt/download
+Python 2.7, 32bit -  https://www.python.org/downloads/
 
-Under Linux (e.g. Ubuntu 14.04 and up), it requires:
+PIL (Python Image Library) - http://www.pythonware.com/products/pil/ 
+
+PyQt4 - https://riverbankcomputing.com/software/pyqt/download (note: PyQt no longer provides Windows binaries, but you can obtain slightly old and suitable ones from https://sourceforge.net/projects/pyqt/files/PyQt4/PyQt-4.11.4/)
+
+#### Under Linux (e.g. Ubuntu 14.04 and up), it requires:
 
 Python 2.7
 Pillow (sudo pip install Pillow)
