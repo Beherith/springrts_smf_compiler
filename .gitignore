@@ -4,3 +4,5 @@ dist/
 
 \.idea/
 venv/
+
+gooey_config\.json
