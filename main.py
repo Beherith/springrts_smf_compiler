@@ -63,7 +63,7 @@ def main():
                         help='The decal for geothermal vents; appears on the compiled map at each vent.\n'
                              'Custom geovent decals should use all white as transparent,\n'
                              'clear this if you do not wish to have geovents drawn.',
-                        default='',
+                        default='geovent.bmp',
                         widget="FileChooser")
     parser.add_argument('-y', '--typemap',
                         metavar='Type Map',
