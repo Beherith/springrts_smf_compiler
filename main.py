@@ -19,13 +19,13 @@ def main():
                         help='What altitude in spring\n'
                              'the max(0xff for 8 bit images or 0xffff for 16bit images)\n'
                              'level of the height map represents',
-                        default=100.0)
+                        default=100.0, type=float)
     parser.add_argument('-n', '--minheight',
                         metavar='Min Height',
                         required=True,
                         help='What altitude in spring\n'
                              'the minimum level (0) of the height map represents',
-                        default=-50.0)
+                        default=-50.0, type=float)
     parser.add_argument('-o', '--outfile',
                         metavar='Output File',
                         required=True,
