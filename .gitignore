@@ -6,3 +6,5 @@ dist/
 venv/
 
 gooey_config\.json
+
+temp/
