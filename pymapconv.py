@@ -202,6 +202,7 @@ def compileSMF(myargs):
 		print 'The .smf extension was omitted from the output file name, output will be:', myargs.outfile
 
 	# open texture, get sizes
+	Image.MAX_IMAGE_PIXELS = None
 	intex = Image.open(myargs.intex)
 	intex_pixels = intex.load()
 	texw, texh = intex.size
