@@ -683,8 +683,7 @@ class SMFMapDecompiler:
             heightmap_file.write(struct.pack('< H', pixel))
         heightmap_file.close()
 
-        print
-        'Writing heightmap BMP'
+        print('Writing heightmap BMP')
         heightmap_img = Image.new('RGB', (1 + self.mapx, 1 + self.mapy), 'black')
         heightmap_img_pixels = heightmap_img.load()
         for x in range(heightmap_img.size[0]):
@@ -778,7 +777,9 @@ class SMFMapDecompiler:
             self.featurenames.append(featurename)
             featureoffset += len(featurename) + 1  # cause of null terminator
             print(featurename)
-            '''nextchar= 'N'
+
+            '''
+            nextchar= 'N'
             while nextchar != '\0':
                 nextchar=struct.unpack_from('c',self.smffile,len(featurename)+self.featurePtr+MapFeatureHeader_struct.size
                     +sum([len(fname)+1 for fname in self.featurenames]))[0]
@@ -786,7 +787,8 @@ class SMFMapDecompiler:
                     self.featurenames.append(featurename)
                     featurename=''
                 else:
-                    featurename+=nextchar'''
+                    featurename+=nextchar
+            '''
 
         print('Features found in map definition', self.featurenames)
         feature_offset = self.featurePtr + MapFeatureHeader_struct.size + sum(
