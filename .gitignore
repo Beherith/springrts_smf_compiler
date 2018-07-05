@@ -6,3 +6,5 @@ dist/
 
 temp/
 venv/
+
+gooey_config\.json
