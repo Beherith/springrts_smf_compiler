@@ -1,0 +1,16 @@
+altgraph==0.15
+dis3==0.1.2
+future==0.16.0
+Gooey==1.0.0
+macholib==1.9
+olefile==0.45.1
+pefile==2017.11.5
+Pillow==5.2.0
+psutil==5.4.6
+PyInstaller==3.3.1
+pypiwin32==223
+Pypubsub==4.0.0
+pywin32==223
+six==1.11.0
+typing==3.6.4
+wxPython==4.0.3
