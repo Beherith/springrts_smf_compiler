@@ -5,8 +5,6 @@ from smf_map_tools import compileSMF
 
 @Gooey(dump_build_config=True,
        program_name="Spring SMF Tools",
-       required_cols=1,
-       optional_cols=2,
        image_dir='images',
        default_size=[1024, 768])
 def main():
@@ -66,6 +64,7 @@ def main():
 
     parser.add_argument('-g', '--geoventfile',
                         metavar='Geovent Texture',
+                        required=True,
                         help='The decal for geothermal vents; appears on the compiled map at each vent.\n'
                              'Custom geovent decals should use all white as transparent,\n'
                              'clear this if you do not wish to have geovents drawn.',
@@ -120,7 +119,8 @@ def main():
                         metavar="Linux",
                         help='Check this if you are running linux and wish to use imagemagicks convert utility instead of nvdxt.exe',
                         default=False,
-                        widget="CheckBox")
+                        widget="CheckBox",
+                        action='store_true')
 
     parser.add_argument('-v', '--nvdxt_options',
                         metavar="NVDXT",
