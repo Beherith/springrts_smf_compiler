@@ -5,6 +5,9 @@ https://springrts.com/
 
 To use the tool, launch pymapconv.py
 
+#### 2019 UPDATE: Windows EXE available, pymapconv.exe works as long as nvdxt.exe is next to it :)
+
+
 #### Under Windows, you will need the following to make this work:
 
 Dowload the precompiled version from here 
