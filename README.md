@@ -3,12 +3,14 @@ This tool allows the compilation and decompilation of image files to SpringRTS's
 
 https://springrts.com/
 
-To use the tool, launch pymapconv.py
+To use the tool, launch pymapconv.py or start pymapconv.exe
 
 #### 2019 UPDATE: Windows EXE available, pymapconv.exe works as long as nvdxt.exe is next to it :)
 
+The windows build is 64 bit, thus allowing the compilation of maps up 64x64 size!
 
-#### Under Windows, you will need the following to make this work:
+
+#### Outdated: Under Windows, you will need the following to make this work:
 
 Dowload the precompiled version from here 
 https://springrts.com/phpbb/viewtopic.php?f=56&t=34378&start=20
