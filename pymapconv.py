@@ -406,16 +406,18 @@ def compileSMF(myargs):
 	if myargs.geoventfile:
 		geoventimg = Image.open(myargs.geoventfile)
 		geoventimg_pixels = geoventimg.load()
+		print 'You have specified a geoventfile named %s, size (%d x %d), which will be drawn onto the texture, centered on the location of the geovent. Except white (255,255,255) pixels, those wont be drawn.'%(myargs.geoventfile, geoventimg.size[0], geoventimg.size[1])
 		if sum(geoventimg.size) > 1000:
 			print 'Warning: You have specified a very large %s geo vent file, are you sure this is what you desire?' % (
 			str(geoventimg.size))
 		for feature in featureplacement:
 			if feature['name'].lower() == 'geovent':
 				geovent_pixel_y = 0
-				for row in range(feature['z'] - geoventimg.size[1] / 2, feature['z'] + geoventimg.size[1] / 2, 1):
+				print 'Drawing a geothermal vent %s at X:%d ; Z:%d'%(geoventimg,feature['z'], feature['x'])
+				for row in range(int(feature['z'] - geoventimg.size[1] / 2), int(feature['z'] + geoventimg.size[1] / 2), 1):
 					geovent_pixel_y += 1
 					geovent_pixel_x = 0
-					for col in range(feature['x'] - geoventimg.size[0] / 2, feature['z'] + geoventimg.size[0] / 2, 1):
+					for col in range(int(feature['x'] - geoventimg.size[0] / 2), int(feature['z'] + geoventimg.size[0] / 2), 1):
 						geovent_pixel_x += 1
 						if sum(geoventimg_pixels[geovent_pixel_x, geovent_pixel_y]) != 3 * 255:
 							try:
@@ -602,8 +604,15 @@ def compileSMF(myargs):
 	for fname in featuretypes:
 		smffile.write(struct.pack('%is' % (len(fname + '\0')), fname + '\0'))
 	for f in featureplacement:
-		smffile.write(
-			MapFeatureStruct_struct.pack(featuretypes.index(f['name']), f['x'], f['y'], f['z'], f['rot'], f['scale']))
+		try:
+			featuretypeindex = featuretypes.index(f['name'])
+		except ValueError:
+			print 'WARNING: Failed to find feature name %s, data: %s in featuretype list %s, putting a TreeType0 there instead [report this error!]'%(f['name'], str(f),str(featuretypes))
+			smffile.write(MapFeatureStruct_struct.pack(featuretypes.index(f['TreeType0']), f['x'], f['y'], f['z'], f['rot'], f['scale']))
+		else:
+			smffile.write(MapFeatureStruct_struct.pack(featuretypes.index(f['name']), f['x'], f['y'], f['z'], f['rot'], f['scale']))
+
+
 	smffile.close()
 
 	print 'Cleaning up temp dir...'
