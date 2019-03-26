@@ -419,11 +419,11 @@ def compileSMF(myargs):
 					geovent_pixel_x = 0
 					for col in range(int(feature['x'] - geoventimg.size[0] / 2), int(feature['z'] + geoventimg.size[0] / 2), 1):
 						geovent_pixel_x += 1
-						if sum(geoventimg_pixels[geovent_pixel_x, geovent_pixel_y]) != 3 * 255:
-							try:
+						try:
+							if sum(geoventimg_pixels[geovent_pixel_x, geovent_pixel_y]) != 3 * 255:
 								intex_pixels[col, row] = geoventimg_pixels[geovent_pixel_x, geovent_pixel_y]
-							except IndexError:
-								print 'Warning: Failed to draw a geovent image pixel onto the main texture at %ix%i' % (
+						except IndexError:
+							print 'Warning: Failed to draw a geovent image pixel onto the main texture at %ix%i' % (
 								col, row)
 
 	typemap = [0] * (mapx / 2) * (mapy / 2)
