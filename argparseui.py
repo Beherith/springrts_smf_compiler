@@ -23,6 +23,8 @@ from PyQt4 import QtCore, QtGui
 __VERSION__ = "0.0.4"
 
 def comb(str1, str2):
+    if str1.count('|') == 2:
+        str1 = str1.partition('|')[2].rpartition('|')[0] + ' \t' + str1.partition('|')[0] + str1.rpartition('|')[2]
     return str1 + str2
 
 import re
@@ -103,12 +105,12 @@ class ArgparseUi(QtGui.QDialog):
         if self.use_save_load_button:
           self.LoadButton = self.addButton("Load options")
 
-        self.OkButton = self.addButton("Ok")
-        self.CancelButton= self.addButton("Cancel")
-
         if self.use_save_load_button:
           self.SaveButton = self.addButton("Save options")
           self.SaveAsButton = self.addButton("Save options as")
+
+        self.OkButton = self.addButton("Compile")
+        self.CancelButton= self.addButton("Cancel (exit)")
 
         self.buttonsLayout.addSpacerItem(QtGui.QSpacerItem(20, 1, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum))
     
@@ -338,7 +340,8 @@ class ArgparseUi(QtGui.QDialog):
         """
         helpstring = self.makeHelpString(a)
         rhslabel = QtGui.QLabel("", self.options)
-        include = QtGui.QCheckBox(helpstring, self.options)
+        #lhslabel = QtGui.QLabel("lhslabel", self.options)
+        include = QtGui.QCheckBox(comb(helpstring,''), self.options)
         if a.default:
             include.setChecked(True)
         self.optionsLayout.addRow(include, rhslabel)

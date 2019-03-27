@@ -199,7 +199,7 @@ def compileSMF(myargs):
 
 	if '.smf' not in myargs.outfile:
 		myargs.outfile += '.smf'
-		print 'The .smf extension was omitted from the output file name, output will be:', myargs.outfile
+		print 'Warning: The .smf extension was omitted from the output file name, output will be:', myargs.outfile
 
 	# open texture, get sizes
 	Image.MAX_IMAGE_PIXELS = None
@@ -374,6 +374,7 @@ def compileSMF(myargs):
 						featureplacement.append(
 							{'name': featurelist[255 - pixel[0]][0], 'x': 8.0 * col + 4, 'y': 0.0, 'z': 8.0 * col + 4,
 							 'rot': featuretypes[255 - pixel[0]][1], 'scale': 1.0})
+						#print 'Placed feature: ',str(featureplacement[-1])
 					except IndexError:
 						print 'Unable to find a featurename in featurelist for red pixel value %i at %ix%i in featuremap!' % (
 						pixel[0], col, row)
@@ -478,7 +479,7 @@ def compileSMF(myargs):
 		if intex.mode == 'RGBA':
 			compressionmethod = 'dxt1a'
 		cmd = 'nvdxt.exe -file temp\\temp*.%s -%s -outsamedir -nmips 4 %s' % (
-		extension, compressionmethod, myargs.nvdxt_options)
+		extension, compressionmethod, '-Sinc -quality_highest' if myargs.nvdxt_options is None else myargs.nvdxt_options)
 		print 'with the command: ',cmd
 		os.system(cmd)
 
@@ -859,31 +860,28 @@ class SMFMapDecompiler:
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
-	parser.add_argument('-x', '--maxheight',
-						help=' <max height> (required) What altitude in spring the max(0xff for 8 bit images or 0xffff for 16bit images) level of the height map represents',
-						default=100.0, type=float)
-	parser.add_argument('-n', '--minheight',
-						help=' <min height> (required) What altitude in spring the minimum level (0) of the height map represents',
-						default=-50.0, type=float)
 	parser.add_argument('-o', '--outfile',
-						help=' <output mapname.smf> (required) The name of the created map file. Should end in .smf. A tilefile (extension .smt) is also created, this name may contain spaces',
-						default='', type=str)
-	parser.add_argument('-m', '--metalmap',
-						help='<metalmap.bmp> Metal map to use, red channel is amount of metal. Resized to xsize / 2 by ysize / 2.',
-						type=str)
+						help='|MAP NAME| <output mapname.smf> (required) The name of the created map file. Should end in .smf. A tilefile (extension .smt) is also created, this name may contain spaces',
+						default='my_new_map.smf', type=str)
+
 	parser.add_argument('-t', '--intex',
-						help='<texturemap.bmp> (required) Input bitmap to use for the map. Sides must be multiple of 1024 long. Xsize and Ysize are determined from this file; xsize = intex width / 8, ysize = height / 8',
+						help='|TEXTURE| <texturemap.bmp> (required) Input bitmap to use for the map. Sizes must be multiples of 1024. Xsize and Ysize are determined from this file; xsize = intex width / 8, ysize = height / 8. Don\'t use Alpha unless you know what you are doing.',
 						default='', type=str)
 	parser.add_argument('-a', '--heightmap',
-						help='<heightmap file> (required) Input heightmap to use for the map, this should be 16 bit greyscale PNG image or a 16bit intel byte order single channel .raw image. Must be xsize*64+1 by ysize*64+1',
+						help='|HEIGHT MAP| <heightmap file> (required) Input heightmap to use for the map, this should be 16 bit greyscale PNG image or a 16bit intel byte order single channel .raw image. Must be xsize*64+1 by ysize*64+1',
 						default='', type=str)
-
-	parser.add_argument('-g', '--geoventfile',
-						help='<geovent.bmp> The decal for geothermal vents; appears on the compiled map at each vent. Custom geovent decals should use all white as transparent, clear this if you do not wish to have geovents drawn.',
-						default='geovent.bmp', type=str)
-	parser.add_argument('-y', '--typemap',
-						help='<typemap.bmp> Type map to use, uses the red channel to decide terrain type. types are defined in the .smd, if this argument is skipped the entire map will TERRAINTYPE0',
+	parser.add_argument('-m', '--metalmap',
+						help='|METAL MAP| <metalmap.bmp> Metal map to use, red channel is amount of metal. Resized to xsize / 2 by ysize / 2.',
 						type=str)
+	parser.add_argument('-x', '--maxheight',
+						help='|MAXIMUM HEIGHT| <max height> (required) What altitude in spring the max(0xff for 8 bit images or 0xffff for 16bit images) level of the height map represents',
+						default=100.0, type=float)
+	parser.add_argument('-n', '--minheight',
+						help='|MINIMUM HEIGHT| <min height> (required) What altitude in spring the minimum level (0) of the height map represents',
+						default=-50.0, type=float)
+	parser.add_argument('-g', '--geoventfile',
+						help='|GEOVENT DECAL| <geovent.bmp> The decal for geothermal vents; appears on the compiled map at each vent. Custom geovent decals should use all white as transparent, clear this if you do not wish to have geovents drawn.',
+						default='geovent.bmp', type=str)
 	# parser.add_argument('-c', '--compress', help =  '<compression> How much we should try to compress the texture map. Values between [0;1] lower values make higher quality, larger files. [NOT IMPLEMENTED YET]',  default = 0.0, type = float )
 
 	# parser.add_argument('-i', '--invert', help = 'Flip the height map image upside-down on reading.', default = False, action='store_true' )
@@ -891,28 +889,31 @@ if __name__ == "__main__":
 
 
 	parser.add_argument('-k', '--featureplacement',
-						help='<featureplacement.lua> A feature placement text file defining the placement of each feature. (Default: fp.txt). See README.txt for details. The default format specifies it to have each line look like this: \n { name = \'agorm_talltree6\', x = 224, z = 3616, rot = "0" , scale = 1.0} \n the [scale] argument currently does nothing in the engine. ',
+						help='|FEATURE PLACEMENT FILE| <featureplacement.lua> A feature placement text file defining the placement of each feature. (Default: fp.txt). See README.txt for details. The default format specifies it to have each line look like this: \n { name = \'agorm_talltree6\', x = 224, z = 3616, rot = "0" , scale = 1.0} \n the [scale] argument currently does nothing in the engine. ',
 						type=str)
 	parser.add_argument('-j', '--featurelist',
-						help='<feature_list_file.txt> (required if featuremap image is specified) A file with the name of one feature on each line. Specifying a number from 32767 to -32768 next to the feature name will tell mapconv how much to rotate the feature. specifying -1 will rotate it randomly.',
+						help='|FEATURE LIST FILE| <feature_list_file.txt> (required if featuremap image is specified) A file with the name of one feature on each line. Specifying a number from 32767 to -32768 next to the feature name will tell mapconv how much to rotate the feature. specifying -1 will rotate it randomly.',
 						type=str)
 	parser.add_argument('-f', '--featuremap',
-						help=' <featuremap.bmp> Feature placement image, xsize by ysize. Green 255 pixels are geo vents, blue is grass, green 201-215 are engine default trees, red 255-0 each correspond to a line in --featurelist',
-						type=str)
-	parser.add_argument('-p', '--minimap',
-						help=' <minimap.bmp> If specified, will override generating a minimap from the texture file (intex) with the specified file. Must be 1024x1024 size.',
+						help='|FEATURE MAP| <featuremap.bmp> Feature placement image, xsize by ysize. Green 255 pixels are geo vents, blue is grass, green 201-215 are engine default trees, red 255-0 each correspond to a line in --featurelist',
 						type=str)
 	parser.add_argument('-r', '--grassmap',
-						help=' <grassmap.bmp> If specified, will override the grass specified in the featuremap. Expects an xsize/4 x ysize/4 sized bitmap, all values that are not 0 will result in grass',
+						help='|GRASS MAP| <grassmap.bmp> If specified, will override the grass specified in the featuremap. Expects an xsize/4 x ysize/4 sized bitmap, all values that are not 0 will result in grass',
+						type=str)
+	parser.add_argument('-y', '--typemap',
+						help='|TYPE MAP| <typemap.bmp> Type map to use, uses the red channel to decide terrain type. types are defined in the .smd, if this argument is skipped the entire map will TERRAINTYPE0',
+						type=str)
+	parser.add_argument('-p', '--minimap',
+						help='|OVERRIDE MINIMAP| <minimap.bmp> If specified, will override generating a minimap from the texture file (intex) with the specified file. Must be 1024x1024 size.',
 						type=str)
 
 	# parser.add_argument('-s', '--justsmf', help = 'Just create smf file, dont make tile file (for quick recompilations)', default = 0, type=int)
+	parser.add_argument('-v', '--nvdxt_options', help='|NVDXT| compression options ', default='-Sinc -quality_highest')
 	parser.add_argument('-u', '--linux',
-						help='Check this if you are running linux and wish to use imagemagicks convert utility instead of nvdxt.exe',
+						help='|LINUX| Check this if you are running linux and wish to use imagemagicks convert utility instead of nvdxt.exe',
 						default=False, action='store_true')
-	parser.add_argument('-v', '--nvdxt_options', help='NVDXT compression options ', default='-Sinc -quality_highest')
-	parser.add_argument('-q', '--quick', help='Quick compilation (lower texture quality)', action='store_true')
-	parser.add_argument('-d', '--decompile', help='Decompiles a map to everything you need to recompile it', type=str)
+	# parser.add_argument('-q', '--quick', help='|FAST| Quick compilation (lower texture quality)', action='store_true') //not implemented yet
+	parser.add_argument('-d', '--decompile', help='|DECOMPILE| Decompiles a map to everything you need to recompile it', type=str)
 	parser.description = 'Spring RTS SMF map compiler/decompiler by Beherith (mysterme@gmail.com). You must select at least a texture and a heightmap for compilation'
 	parser.epilog = 'Remember, you can also use this from the command line!'
 
