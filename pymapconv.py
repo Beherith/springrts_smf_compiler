@@ -361,8 +361,8 @@ def compileSMF(myargs):
 
 				if pixel[1] == 255:  # geovent
 					featureplacement.append(
-						{'name': 'Geovent', 'x': 8.0 * col + 4, 'y': 0.0, 'z': 8.0 * col + 4, 'rot': 0.0, 'scale': 1.0})
-					print 'Placed Geovent: %s' % (str(featureplacement[-1]))
+						{'name': 'GeoVent', 'x': 8.0 * col + 4, 'y': 0.0, 'z': 8.0 * col + 4, 'rot': 0.0, 'scale': 1.0})
+					print 'Placed GeoVent: %s' % (str(featureplacement[-1]))
 				elif pixel[1] < 216 and pixel[1] > 199:
 					featureplacement.append(
 						{'name': 'TreeType%i' % (pixel[1] - 200), 'x': 8.0 * col + 4, 'y': 0.0, 'z': 8.0 * col + 4,
@@ -423,8 +423,8 @@ def compileSMF(myargs):
 							if sum(geoventimg_pixels[geovent_pixel_x, geovent_pixel_y]) != 3 * 255:
 								intex_pixels[col, row] = geoventimg_pixels[geovent_pixel_x, geovent_pixel_y]
 						except IndexError:
-							print 'Warning: Failed to draw a geovent image pixel onto the main texture at %ix%i' % (
-								col, row)
+							print 'Warning: Failed to draw a geovent image pixel onto the main texture at %ix%i from geoventimg %s %dx%d' % (
+								col, row, myargs.geoventfile, geovent_pixel_x,geovent_pixel_y)
 
 	typemap = [0] * (mapx / 2) * (mapy / 2)
 	if myargs.typemap:
