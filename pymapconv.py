@@ -7,8 +7,7 @@ from PIL import Image
 import png
 import random
 import argparse
-from PyQt4 import QtGui
-import argparseui
+
 import os
 import math
 import gc
@@ -202,7 +201,7 @@ def compileSMF(myargs):
 		print 'Warning: The .smf extension was omitted from the output file name, output will be:', myargs.outfile
 
 	# open texture, get sizes
-	Image.MAX_IMAGE_PIXELS = None
+	Image.MAX_IMAGE_PIXELS = 16000000000
 	intex = Image.open(myargs.intex)
 	intex_pixels = intex.load()
 	texw, texh = intex.size
@@ -930,7 +929,8 @@ if __name__ == "__main__":
 		okbuttonhandler(parser)
 		exit(1)
 	else:
-
+		from PyQt4 import QtGui
+		import argparseui
 		app = QtGui.QApplication(sys.argv)
 		a = argparseui.ArgparseUi(parser, left_label_alignment=True, use_scrollbars=True, use_save_load_button=True,
 								  ok_button_handler=okbuttonhandler,
