@@ -467,7 +467,7 @@ def compileSMF(myargs):
 		basecmd = 'convert -format dds -define dds:mipmaps=3 -define dds:compression=dxt1 temp/temp%i.%s temp/temp%i.dds'
 		print 'with the base command of:', basecmd
 		for tilex in range(springmapx / 2):
-			for tiley in range(springmapx / 2):
+			for tiley in range(springmapy / 2):
 				tileindex = tiley * (springmapx / 2) + tilex
 				cmd = basecmd % (tileindex, extension, tileindex)
 				os.system(cmd)
