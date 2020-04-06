@@ -454,7 +454,7 @@ def compileSMF(myargs):
 	if intex.mode == 'RGBA':
 		extension = 'tiff'
 	for tilex in range(springmapx / 2):
-		for tiley in range(springmapx / 2):
+		for tiley in range(springmapy / 2):
 			tileindex = tiley * (springmapx / 2) + tilex
 			newtile = intex.crop((1024 * tilex, 1024 * tiley, 1024 * (tilex + 1), 1024 * (
 			tiley + 1)))  # The box is a 4-tuple defining the left, upper, right, and lower pixel coordinate.
@@ -522,7 +522,7 @@ def compileSMF(myargs):
 	tileindices = {}
 
 	for tilex in range(springmapx / 2):
-		for tiley in range(springmapx / 2):
+		for tiley in range(springmapy / 2):
 			tileindex = tiley * (springmapx / 2) + tilex
 			ddsfile = open(os.path.join('temp', 'temp%i.dds' % (tileindex)), 'rb')
 			ddsdata = ddsfile.read()[128:]
