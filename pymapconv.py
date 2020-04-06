@@ -495,8 +495,12 @@ def compileSMF(myargs):
 					outtile += sourcebuf[ptr:ptr + 8]
 			sourceoffset += 524288 / (1 << (i * 2))
 		return outtile
-
-	minimapfilename = os.path.join('temp', 'mini.png')
+	
+	minimapfilename = os.path.join('temp', 'mini.bmp') #else we can get spurious alpha pixels in minimap
+	compressionmethod = 'dxt1c'
+	if intex.mode == 'RGBA':
+		minimapfilename = os.path.join('temp', 'mini.tiff')
+		compressionmethod = 'dxt1a'
 	print 'Creating minimap', minimapfilename,'using the command:',
 	if myargs.minimap:
 		minimapfilename = myargs.minimap
@@ -509,7 +513,7 @@ def compileSMF(myargs):
 		print cmd
 		os.system(cmd)
 	else:
-		cmd = 'nvdxt.exe -file %s -dxt1c -nmips 9 -output temp/mini.dds -Sinc -quality_highest' % (minimapfilename)
+		cmd = 'nvdxt.exe -file %s -%s -nmips 9 -output temp/mini.dds -Sinc -quality_highest' % (minimapfilename,compressionmethod)
 		print cmd
 		os.system(cmd)
 	minimapdata = open(os.path.join('temp', 'mini.dds'), 'rb').read()[128:]
