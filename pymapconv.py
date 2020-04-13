@@ -12,7 +12,15 @@ import os
 import math
 import gc
 
-print 'Welcome to the SMF compiler/decompiler by Beherith (mysterme@gmail.com)'
+pymapconv_version = "2.0"
+print 'Welcome to the SMF compiler/decompiler by Beherith (mysterme@gmail.com) ' + pymapconv_version
+
+haswinsound = False
+try:
+	import winsound
+	haswinsound = True
+except:
+	pass
 
 SMFHeader_struct = struct.Struct('< 16s i i i i i i i f f i i i i i i i')
 '''	char magic[16];      ///< "spring map file\0"
@@ -194,7 +202,7 @@ def compileSMF(myargs):
 	print 'Compiling SMF with the following options:', myargs
 	if myargs.outfile == '':
 		print 'Please specify a name for the map!'
-		return
+		return -1
 
 	if '.smf' not in myargs.outfile:
 		myargs.outfile += '.smf'
@@ -211,7 +219,7 @@ def compileSMF(myargs):
 	springmapy = texh / 512
 	if (texh % 1024 != 0) or (texw % 1024 != 0):
 		print 'Error: Texture Image dimensions are not multiples of 1024! (%ix%i) Aborting' % (texw, texh)
-		return
+		return -1
 	else:
 		print 'Texture image %s seems to have the correct dimensions (%ix%i) for a spring map size of (%ix%i)' % (
 			myargs.intex, texw, texh, springmapx, springmapy)
@@ -232,7 +240,7 @@ def compileSMF(myargs):
 		if len(rawheight) != expectedheightmapsize:
 			print 'Error: Incorrect %s heightmap dimensions, file size should be exactly %i (%ix%i) for a spring map size of (%ix%i)' % (
 				myargs.heightmap, expectedheightmapsize, mapx + 1, mapy + 1, springmapx, springmapy)
-			return
+			return -1
 		else:
 			heights = struct.unpack('< ' + 'H' * (expectedheightmapsize / 2), rawheight)
 	elif '.png' in myargs.heightmap.lower():
@@ -243,17 +251,17 @@ def compileSMF(myargs):
 		if pngheight[0] * pngheight[1] != (mapx + 1) * (mapy + 1):
 			print 'Error: Incorrect %s heightmap dimensions of (%ix%i), image size should be exactly %ix%i for a spring map size of (%ix%i)' % (
 				myargs.heightmap, pngheight[0], pngheight[1], mapx + 1, mapy + 1, springmapx, springmapy)
-			return
+			return -1
 		if pngheight[3]['bitdepth'] != 16:
 			print 'Error: heightmap %s must be 16 bit depth, instead it is %i. Dont use .png for 8 bit heightmaps, use .bmp!' % (
 			myargs.heightmap, pngheight[3]['bitdepth'])
-			return
+			return -1
 		if pngheight[3]['greyscale'] == False:
 			print 'Error: heightmap %s must be greyscale!' % (myargs.heightmap)
-			return
+			return -1
 		if pngheight[3]['alpha'] == True:
 			print 'Error: heightmap %s must not contain an alpha channel!' % (myargs.heightmap)
-			return
+			return -1
 
 		# do a check to make sure the full 16-bit range of heights are used!
 		heightlevelshist = {}
@@ -276,7 +284,7 @@ def compileSMF(myargs):
 		if otherheight.size != (mapx + 1, mapy + 1):
 			print 'Error: Incorrect %s heightmap dimensions of (%ix%i), image size should be exactly %ix%i for a spring map size of (%ix%i)' % (
 				myargs.heightmap, otherheight.size[0], otherheight.size[1], mapx + 1, mapy + 1, springmapx, springmapy)
-			return
+			return -1
 		for row in range(otherheight.size[1]):
 			for col in range(otherheight.size[0]):
 				heights.append(sum(otherheight_pixels[col, row]) * 256 / 3)
@@ -349,7 +357,7 @@ def compileSMF(myargs):
 		if featuremap.size != (mapx, mapy):
 			print 'Error: Incorrect %s featuremap dimensions of (%ix%i), image size should be exactly %ix%i for a spring map size of (%ix%i)' % (
 				myargs.featuremap, featuremap.size[0], featuremap.size[1], mapx, mapy, springmapx, springmapy)
-			return
+			return -1
 		featuremap_pixels = featuremap.load()
 		for row in range(featuremap.size[1]):
 			for col in range(featuremap.size[0]):
@@ -392,7 +400,7 @@ def compileSMF(myargs):
 		if grassmap.size != (mapx / 4, mapy / 4):
 			print 'Error: Incorrect %s grassmap dimensions of (%ix%i), image size should be exactly %ix%i for a spring map size of (%ix%i)' % (
 				myargs.grassmap, grassmap.size[0], grassmap.size[1], mapx / 4, mapy / 4, springmapx, springmapy)
-			return
+			return -1
 		grassmap_pixels = grassmap.load()
 		for row in range(grassmap.size[1]):
 			for col in range(grassmap.size[0]):
@@ -415,17 +423,17 @@ def compileSMF(myargs):
 				geovent_pixel_y = 0
 				print 'Drawing a geothermal vent %s at X:%d ; Z:%d'%(geoventimg,feature['z'], feature['x'])
 				for row in range(int(feature['z'] - geoventimg.size[1] / 2), int(feature['z'] + geoventimg.size[1] / 2), 1):
-					geovent_pixel_y += 1
 					geovent_pixel_x = 0
-					for col in range(int(feature['x'] - geoventimg.size[0] / 2), int(feature['z'] + geoventimg.size[0] / 2), 1):
-						geovent_pixel_x += 1
+					for col in range(int(feature['x'] - geoventimg.size[0] / 2), int(feature['x'] + geoventimg.size[0] / 2), 1):
+						
 						try:
 							if sum(geoventimg_pixels[geovent_pixel_x, geovent_pixel_y]) != 3 * 255:
 								intex_pixels[col, row] = geoventimg_pixels[geovent_pixel_x, geovent_pixel_y]
 						except IndexError:
 							print 'Warning: Failed to draw a geovent image pixel onto the main texture at %ix%i from geoventimg %s %dx%d' % (
 								col, row, myargs.geoventfile, geovent_pixel_x,geovent_pixel_y)
-
+						geovent_pixel_x += 1
+					geovent_pixel_y += 1
 	typemap = [0] * (mapx / 2) * (mapy / 2)
 	if myargs.typemap:
 		print 'Loading typemap', myargs.typemap
@@ -433,7 +441,7 @@ def compileSMF(myargs):
 		if typemap_img.size != (mapx / 2, mapy / 2):
 			print 'Error: Incorrect %s typemap dimensions of (%ix%i), image size should be exactly %ix%i for a spring map size of (%ix%i)' % (
 				myargs.typemap, typemap_img.size[0], typemap_img.size[1], mapx / 2, mapy / 2, springmapx, springmapy)
-			return
+			return -1
 
 		typemap_img_pixel = typemap_img.load()
 		for row in range(typemap_img.size[1]):
@@ -496,10 +504,10 @@ def compileSMF(myargs):
 			sourceoffset += 524288 / (1 << (i * 2))
 		return outtile
 	
-	minimapfilename = os.path.join('temp', 'mini.bmp') #else we can get spurious alpha pixels in minimap
+	minimapfilename = os.path.join('temp', 'minimap.bmp') #else we can get spurious alpha pixels in minimap
 	compressionmethod = 'dxt1c'
 	if intex.mode == 'RGBA':
-		minimapfilename = os.path.join('temp', 'mini.tiff')
+		minimapfilename = os.path.join('temp', 'minimap.tiff')
 		compressionmethod = 'dxt1a'
 	print 'Creating minimap', minimapfilename,'using the command:',
 	if myargs.minimap:
@@ -508,15 +516,15 @@ def compileSMF(myargs):
 		mini = intex.resize((1024, 1024), Image.ANTIALIAS)
 		mini.save(minimapfilename)
 	if myargs.linux:
-		cmd = 'convert -format dds -define dds:mipmaps=8 -define dds:compression=dxt1 %s temp/mini.dds' % (
+		cmd = 'convert -format dds -define dds:mipmaps=8 -define dds:compression=dxt1 %s temp/minimap.dds' % (
 		minimapfilename)
 		print cmd
 		os.system(cmd)
 	else:
-		cmd = 'nvdxt.exe -file %s -%s -nmips 9 -output temp/mini.dds -Sinc -quality_highest' % (minimapfilename,compressionmethod)
+		cmd = 'nvdxt.exe -file %s -%s -nmips 9 -output temp/minimap.dds -Sinc -quality_highest' % (minimapfilename,compressionmethod)
 		print cmd
 		os.system(cmd)
-	minimapdata = open(os.path.join('temp', 'mini.dds'), 'rb').read()[128:]
+	minimapdata = open(os.path.join('temp', 'minimap.dds'), 'rb').read()[128:]
 
 	intex = None
 	gc.collect()
@@ -541,15 +549,18 @@ def compileSMF(myargs):
 					if tilepos in tileindices:
 						print 'something is very wrong here with tilepos, aborting compilation'
 						print x, y, tilex, tiley, tileindex
-						return
+						return -1
 					tileindices[tilepos] = tilehash[tile]
 			ddsfile.close()
 	# TODO: tilehash is larger than max tiles sometimes!
 	print 'Lossless compression of 32x32 tiles: %i tiles used of %i maximum' % (len(tilehash), 256 * springmapx * springmapy)
 
-	smtfilename = myargs.outfile.replace('.smf', '.smt')
-	print 'Writing tile file ',smtfilename
-	tilefile = open(smtfilename, 'wb')
+	smtfilepath = myargs.outfile.replace('.smf', '.smt')
+	smtfilename = smtfilepath
+	if os.path.sep in smtfilepath:
+		smtfilename = smtfilepath.rpartition(os.path.sep)[2]
+	print 'Writing tile file ',smtfilepath,' linked as', smtfilename
+	tilefile = open(smtfilepath, 'wb')
 	tilefile.write(TileFileHeader_struct.pack('spring tilefile\0', 1, len(tilehash), 32, 1))
 	inversetiledict = {}
 	for tile, index in tilehash.iteritems():
@@ -619,14 +630,16 @@ def compileSMF(myargs):
 
 	smffile.close()
 
-	print 'Cleaning up temp dir...'
-	if myargs.linux:
-		#os.system('rm -r ./temp')
-		pass
-	else:
-		#os.system('del /Q temp')
-		pass
+	if myargs.clean:
+		print 'Cleaning up temp dir...'
+		if myargs.linux:
+			os.system('rm -r ./temp')
+			pass
+		else:
+			os.system('del /Q temp')
+			pass
 	print 'All Done! You may now close the main window to exit the program :)'
+	return 0
 
 
 class SMFMapDecompiler:
@@ -915,6 +928,9 @@ if __name__ == "__main__":
 	parser.add_argument('-u', '--linux',
 						help='|LINUX| Check this if you are running linux and wish to use imagemagicks convert utility instead of nvdxt.exe',
 						default=False, action='store_true')
+	parser.add_argument('-c', '--clean',
+						help='|CLEAN| Remove temp directory after compilation',
+						default=True, action='store_true')
 	# parser.add_argument('-q', '--quick', help='|FAST| Quick compilation (lower texture quality)', action='store_true') //not implemented yet
 	parser.add_argument('-d', '--decompile', help='|DECOMPILE| Decompiles a map to everything you need to recompile it', type=str)
 	parser.description = 'Spring RTS SMF map compiler/decompiler by Beherith (mysterme@gmail.com). You must select at least a texture and a heightmap for compilation'
@@ -926,8 +942,14 @@ if __name__ == "__main__":
 		print (parsed_args)
 		if parsed_args.decompile != '' and parsed_args.decompile != None:
 			mymap = SMFMapDecompiler(parsed_args.decompile)
-		else:
-			compileSMF(parsed_args)
+		else:				
+			compilesuccess = compileSMF(parsed_args)
+			if haswinsound and compilesuccess == 0:
+				winsound.Beep(220,100)
+				winsound.Beep(293,100)
+			if haswinsound and compilesuccess == -1:
+				winsound.Beep(220,100)
+				winsound.Beep(164,100)
 	#print 'sys.argv:',sys.argv
 	if len(sys.argv) > 1: # if we got command line, then just run without gui
 		okbuttonhandler(parser)
@@ -938,7 +960,7 @@ if __name__ == "__main__":
 		app = QtGui.QApplication(sys.argv)
 		a = argparseui.ArgparseUi(parser, left_label_alignment=True, use_scrollbars=True, use_save_load_button=True,
 								  ok_button_handler=okbuttonhandler,
-								  window_title="Spring Map Format (SMF) compiler and decompiler")
+								  window_title="Spring Map Format (SMF) compiler and decompiler "+pymapconv_version)
 		a.show()
 		app.exec_()
 		print ("Ok" if a.result() == 1 else "Cancel")
@@ -948,7 +970,13 @@ if __name__ == "__main__":
 			if parsed_args.decompile != '' and parsed_args.decompile != None:
 				mymap = SMFMapDecompiler(parsed_args.decompile)
 			else:
-				compileSMF(parsed_args)
+				compilesuccess = compileSMF(parsed_args)
+				if haswinsound and compilesuccess == 0:
+					winsound.Beep(220,100)
+					winsound.Beep(293,100)
+				if haswinsound and compilesuccess == -1:
+					winsound.Beep(220,100)
+					winsound.Beep(164,100)
 		else:
 			parsed_args = None
 

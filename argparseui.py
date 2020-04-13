@@ -17,6 +17,7 @@
 
 import textwrap
 import argparse
+import os
 
 from PyQt4 import QtCore, QtGui
 
@@ -67,7 +68,7 @@ _OR_MORE = {
 class ArgparseUi(QtGui.QDialog):
     def __init__(self, parser, use_scrollbars=False, remove_defaults_from_helptext=False,
                  helptext_default=' [default=%(default)s]', use_save_load_button=False, window_title="Make your choice", 
-                 left_label_alignment=None, ok_button_handler=None, cancel_button_handler=None, parent=None):
+                 left_label_alignment=None, ok_button_handler=None, cancel_button_handler=None, dnts_button_handler = None, parent=None):
         super(ArgparseUi, self).__init__(parent)
         self.setWindowTitle(window_title)
         self.parser = parser
@@ -76,6 +77,7 @@ class ArgparseUi(QtGui.QDialog):
         self.helptext_default = helptext_default
         self.use_save_load_button = use_save_load_button
         self.ok_button_handler = ok_button_handler # function that takes two options: the ArgparseUi instance and "parsed options"
+        self.dnts_button_handler = dnts_button_handler # function that takes two options: the ArgparseUi instance and "parsed options"
         self.cancel_button_handler= cancel_button_handler # function that takes one option: the ArgparseUi instance
         self.commandLineArgumentCreators = []
         self.filename = None
@@ -110,11 +112,16 @@ class ArgparseUi(QtGui.QDialog):
           self.SaveAsButton = self.addButton("Save options as")
 
         self.OkButton = self.addButton("Compile")
+        self.OkButton.setToolTip("Start compilation/decompilation")
         self.CancelButton= self.addButton("Cancel (exit)")
 
+        self.DNTSButton = self.addButton("Convert image to DDS (DNTS)")
+        self.DNTSButton.setToolTip("Choose any image and have NVDXT convert it to a DXT5 DDS file for inclusion in maps")
         self.buttonsLayout.addSpacerItem(QtGui.QSpacerItem(20, 1, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum))
     
         self.OkButton.clicked.connect(self.onOk)
+        self.DNTSButton.clicked.connect(self.onDNTS)
+        
         self.CancelButton.clicked.connect(self.onCancel)
         if self.use_save_load_button:
           self.LoadButton.clicked.connect(self.onLoad)
@@ -657,8 +664,20 @@ class ArgparseUi(QtGui.QDialog):
                 self.ok_button_handler(self)
         else:
             mutexes = "\n".join([",".join(o) for o in offensive_options])
-            QtGui.QMessageBox.question(self, 'Validation error', "The following options are mutually exclusive:\n{0}".format(mutexes), QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
-            
+            QtGui.QMessageBox.question(self, 'Validation error', "The following options are mutually exclusive:\n{0}".format(mutexes), QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)        
+
+    def onDNTS(self):
+        """
+        handle DNTS button pressed
+        """
+        filename = QtGui.QFileDialog.getOpenFileName() # has / as pathsep
+        if filename:
+            filename = str(filename)
+            outputfilename = filename.rpartition('/')[2].rpartition('.')[0]+'.dds'
+            nvdxtcommand = 'nvdxt.exe -file "%s" -dxt5 -Sinc -quality_highest -output "%s"'%(filename,outputfilename)
+            print("DNTS Conversion:",nvdxtcommand)
+            os.system(nvdxtcommand)    
+            print("Done")
     def onCancel(self):
         """
         handle cancel button pressed
