@@ -12,7 +12,7 @@ import os
 import math
 import gc
 
-pymapconv_version = "2.0"
+pymapconv_version = "2.1"
 print 'Welcome to the SMF compiler/decompiler by Beherith (mysterme@gmail.com) ' + pymapconv_version
 
 haswinsound = False
@@ -482,7 +482,7 @@ def compileSMF(myargs):
 				print tileindex,
 		print ''
 	else:
-		compressionmethod = 'dxt1c'
+		compressionmethod = 'dxt1a'
 		if intex.mode == 'RGBA':
 			compressionmethod = 'dxt1a'
 		cmd = 'nvdxt.exe -file temp\\temp*.%s -%s -outsamedir -nmips 4 %s' % (
@@ -505,7 +505,7 @@ def compileSMF(myargs):
 		return outtile
 	
 	minimapfilename = os.path.join('temp', 'minimap.bmp') #else we can get spurious alpha pixels in minimap
-	compressionmethod = 'dxt1c'
+	compressionmethod = 'dxt1a'
 	if intex.mode == 'RGBA':
 		minimapfilename = os.path.join('temp', 'minimap.tiff')
 		compressionmethod = 'dxt1a'
