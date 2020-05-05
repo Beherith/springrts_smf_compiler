@@ -380,7 +380,7 @@ def compileSMF(myargs):
 					try:
 						featureplacement.append(
 							{'name': featurelist[255 - pixel[0]][0], 'x': 8.0 * col + 4, 'y': 0.0, 'z': 8.0 * col + 4,
-							 'rot': featuretypes[255 - pixel[0]][1], 'scale': 1.0})
+							 'rot': float(featuretypes[255 - pixel[0]][1]), 'scale': 1.0})
 						#print 'Placed feature: ',str(featureplacement[-1])
 					except IndexError:
 						print 'Unable to find a featurename in featurelist for red pixel value %i at %ix%i in featuremap!' % (
