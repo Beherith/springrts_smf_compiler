@@ -368,19 +368,19 @@ def compileSMF(myargs):
 
 				if pixel[1] == 255:  # geovent
 					featureplacement.append(
-						{'name': 'GeoVent', 'x': 8.0 * col + 4, 'y': 0.0, 'z': 8.0 * col + 4, 'rot': 0.0, 'scale': 1.0})
+						{'name': 'GeoVent', 'x': 8.0 * col + 4, 'y': 0.0, 'z': 8.0 * row + 4, 'rot': 0.0, 'scale': 1.0})
 					print 'Placed GeoVent: %s' % (str(featureplacement[-1]))
 				elif pixel[1] < 216 and pixel[1] > 199:
 					featureplacement.append(
-						{'name': 'TreeType%i' % (pixel[1] - 200), 'x': 8.0 * col + 4, 'y': 0.0, 'z': 8.0 * col + 4,
+						{'name': 'TreeType%i' % (pixel[1] - 200), 'x': 8.0 * col + 4, 'y': 0.0, 'z': 8.0 * row + 4,
 						 'rot': 0.0, 'scale': 1.0})
 				elif pixel[1] != 0:
 					print 'Undefined green pixel of value %i at %i x %i in %s. Not placing anything'
 				if pixel[0] > 0:
 					try:
 						featureplacement.append(
-							{'name': featurelist[255 - pixel[0]][0], 'x': 8.0 * col + 4, 'y': 0.0, 'z': 8.0 * col + 4,
-							 'rot': float(featuretypes[255 - pixel[0]][1]), 'scale': 1.0})
+							{'name': featurelist[255 - pixel[0]][0], 'x': 8.0 * col + 4, 'y': 0.0, 'z': 8.0 * row + 4,
+							 'rot': 0.0, 'scale': 1.0})
 						#print 'Placed feature: ',str(featureplacement[-1])
 					except IndexError:
 						print 'Unable to find a featurename in featurelist for red pixel value %i at %ix%i in featuremap!' % (
