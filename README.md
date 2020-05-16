@@ -5,7 +5,8 @@ https://springrts.com/
 
 To use the tool, place it in your /maps folder and launch pymapconv.py or start pymapconv.exe
 
-Miraculously self documenting:
+Miraculously self documenting, with one caveat: dont use absolute paths in MAP NAME.
+
 ![gooey](https://raw.githubusercontent.com/Beherith/springrts_smf_compiler/master/pymapconv_gui.png)
 
 
