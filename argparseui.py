@@ -116,7 +116,7 @@ class ArgparseUi(QtGui.QDialog):
         self.CancelButton= self.addButton("Cancel (exit)")
 
         self.DNTSButton = self.addButton("Convert image to DDS (DNTS)")
-        self.DNTSButton.setToolTip("Choose any image and have NVDXT convert it to a DXT5 DDS file for inclusion in maps")
+        self.DNTSButton.setToolTip("Choose any image and have NVDXT convert it to a DXT5 DDS file for inclusion in maps. TGA files get flipped")
         self.buttonsLayout.addSpacerItem(QtGui.QSpacerItem(20, 1, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum))
     
         self.OkButton.clicked.connect(self.onOk)
@@ -674,7 +674,10 @@ class ArgparseUi(QtGui.QDialog):
         if filename:
             filename = str(filename)
             outputfilename = filename.rpartition('/')[2].rpartition('.')[0]+'.dds'
-            nvdxtcommand = 'nvdxt.exe -file "%s" -dxt5 -Sinc -quality_highest -output "%s"'%(filename,outputfilename)
+            flip = ''
+            if filename.lower.endswith('.tga'):
+                flip = " -flip"
+            nvdxtcommand = 'nvdxt.exe -file "%s" -dxt5 -Sinc -quality_highest -output "%s"'%(filename,outputfilename) + flip
             print("DNTS Conversion:",nvdxtcommand)
             os.system(nvdxtcommand)    
             print("Done")

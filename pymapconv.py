@@ -643,7 +643,7 @@ def compileSMF(myargs):
 
 
 class SMFMapDecompiler:
-	def __init__(self, filename):
+	def __init__(self, filename, minimaponly = False):
 		verbose = True
 		self.filename = filename
 		self.basename = filename.rpartition('.')[0]
@@ -675,6 +675,26 @@ class SMFMapDecompiler:
 		if verbose:
 			attrs = vars(self)
 			print self.SMFHeader
+
+		print 'Writing minimap'
+		miniddsheaderstr = ([68, 68, 83, 32, 124, 0, 0, 0, 7, 16, 10, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0,
+							 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+							 0, 0, 0, 0, 0, 0, 0,
+							 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 0, 0, 0, 4, 0, 0, 0, 68, 88, 84, 49, 0, 0, 0, 0, 0, 0,
+							 0, 0, 0, 0, 0, 0, 0,
+							 0, 0, 0, 0, 0, 0, 0, 8, 16, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+		self.minimap = self.smffile[self.minimapPtr:self.minimapPtr + MINIMAP_SIZE]
+		if minimaponly:
+			minimap_file = open(os.path.basename(self.basename) + '_%ix%i_mini.dds'%(self.mapx/64, self.mapy/64), 'wb')
+		else:
+			minimap_file = open(self.basename + '_mini.dds', 'wb')
+		for c in miniddsheaderstr:
+			minimap_file.write(struct.pack('< B', c))
+		minimap_file.write(self.minimap)
+		minimap_file.close()
+
+		if minimaponly:
+			return
 
 		print 'Writing heightmap RAW (Remember, this is a %i by %i 16bit 1 channel IBM byte order raw!)' % (
 		(1 + self.mapx), (1 + self.mapy))
@@ -724,19 +744,6 @@ class SMFMapDecompiler:
 				typemap_img_pixels[x, y] = (typep, 0, 0)
 		typemap_img.save(self.basename + '_type.bmp')
 
-		print 'Writing minimap'
-		miniddsheaderstr = ([68, 68, 83, 32, 124, 0, 0, 0, 7, 16, 10, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0,
-							 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-							 0, 0, 0, 0, 0, 0, 0,
-							 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 0, 0, 0, 4, 0, 0, 0, 68, 88, 84, 49, 0, 0, 0, 0, 0, 0,
-							 0, 0, 0, 0, 0, 0, 0,
-							 0, 0, 0, 0, 0, 0, 0, 8, 16, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-		self.minimap = self.smffile[self.minimapPtr:self.minimapPtr + MINIMAP_SIZE]
-		minimap_file = open(self.basename + '_mini.dds', 'wb')
-		for c in miniddsheaderstr:
-			minimap_file.write(struct.pack('< B', c))
-		minimap_file.write(self.minimap)
-		minimap_file.close()
 
 		print 'Writing grassmap'
 		# vegmapoffset = SMFHeader_struct.size+ExtraHeader_struct.size+4
