@@ -234,7 +234,7 @@ def compileSMF(myargs):
 		myargs.intex, intex.mode)
 	# open heightmap:
 	heights = []
-	if '.raw' in myargs.heightmap.lower():
+	if '.raw' in myargs.heightmap.lower() or '.r16' in myargs.heightmap.lower():
 		rawheight = open(myargs.heightmap, 'rb').read()
 		expectedheightmapsize = (mapx + 1) * (mapy + 1) * 2
 		if len(rawheight) != expectedheightmapsize:
