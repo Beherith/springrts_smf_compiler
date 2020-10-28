@@ -43,3 +43,8 @@ PyQt4  (sudo apt-get install python-Qt4)
 ImageMagick (sudo apt-get install imagemagick)
 
 ## by Beherith 
+
+Note2self for exe build:
+activate pymapconv
+pyinstaller --onefile pymapconv.py
+
