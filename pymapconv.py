@@ -12,7 +12,7 @@ import os
 import math
 import gc
 
-pymapconv_version = "3.1"
+pymapconv_version = "3.2"
 print 'Welcome to the SMF compiler/decompiler by Beherith (mysterme@gmail.com) ' + pymapconv_version
 
 haswinsound = False
@@ -577,13 +577,22 @@ def compileSMF(myargs):
 	
 	minimapfilename = os.path.join('temp', 'minimap.bmp') #else we can get spurious alpha pixels in minimap
 	compressionmethod = 'dxt1a'
-	if intex.mode == 'RGBA':
-		minimapfilename = os.path.join('temp', 'minimap.tiff')
-		compressionmethod = 'dxt1a'
+
 	print 'Creating minimap', minimapfilename,'using the command:',
 	if myargs.minimap:
-		minimapfilename = myargs.minimap
+		try:
+			minimapoverride = Image.open(myargs.minimap)
+			minimapoverride = minimapoverride.resize((1024,1024), Image.ANTIALIAS)
+			if minimapoverride.mode == 'RGBA':
+				minimapfilename = minimapfilename = os.path.join('temp', 'minimap.tiff')
+			minimapoverride.save(minimapfilename)
+		except:
+			print ("Failed to open minimap file name:", myargs.minimap)
+
 	else:
+		if intex.mode == 'RGBA':
+			minimapfilename = os.path.join('temp', 'minimap.tiff')
+			compressionmethod = 'dxt1a'
 		mini = intex.resize((1024, 1024), Image.ANTIALIAS)
 		mini.save(minimapfilename)
 	if myargs.linux:
@@ -595,6 +604,7 @@ def compileSMF(myargs):
 		cmd = 'nvdxt.exe -file %s -%s -nmips 9 -output temp/minimap.dds -Sinc -quality_highest' % (minimapfilename,compressionmethod)
 		print cmd
 		os.system(cmd)
+
 	minimapdata = open(os.path.join('temp', 'minimap.dds'), 'rb').read()[128:]
 
 	intex = None
@@ -677,7 +687,7 @@ def compileSMF(myargs):
 		smffile.write(struct.pack('<H', h))
 	for t in typemap:
 		smffile.write(struct.pack('B', t))
-	smffile.write(minimapdata)
+	smffile.write(minimapdata[:MINIMAP_SIZE])# dont even write more than needed, or else produced map will crash!
 	if verbose:
 		print 'Length of minimap data chunk = ', len(minimapdata), ', should be equal to', MINIMAP_SIZE
 		print 'Length of metalmap data chunk', len(metalmap)
