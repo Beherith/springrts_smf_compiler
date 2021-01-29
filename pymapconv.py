@@ -12,7 +12,8 @@ import os
 import math
 import gc
 
-pymapconv_version = "3.2"
+pymapconv_version = "3.3"
+
 print 'Welcome to the SMF compiler/decompiler by Beherith (mysterme@gmail.com) ' + pymapconv_version
 
 haswinsound = False
@@ -725,7 +726,7 @@ def compileSMF(myargs):
 
 
 class SMFMapDecompiler:
-	def __init__(self, filename, minimaponly = False):
+	def __init__(self, filename, minimaponly = False, skiptexture = False):
 		verbose = True
 		self.savedir, self.filename = os.path.split(filename)
 		self.basename = filename.rpartition('.')[0]
@@ -778,10 +779,15 @@ class SMFMapDecompiler:
 		if minimaponly:
 			return
 
-		print 'Writing heightmap RAW (Remember, this is a %i by %i 16bit 1 channel IBM byte order raw!)' % (
-		(1 + self.mapx), (1 + self.mapy))
+
+
 		self.heightmap = struct.unpack_from('< %iH' % ((1 + self.mapx) * (1 + self.mapy)), self.smffile,
 											self.heightmapPtr)
+
+		'''
+		-- The following are obsolete:
+		print 'Writing heightmap RAW (Remember, this is a %i by %i 16bit 1 channel IBM byte order raw!)' % (
+		(1 + self.mapx), (1 + self.mapy))
 		heightmap_file = open(os.path.join(self.savedir,self.basename + '_height.raw'), 'wb')
 		for pixel in self.heightmap:
 			heightmap_file.write(struct.pack('< H', pixel))
@@ -795,7 +801,7 @@ class SMFMapDecompiler:
 				height = self.heightmap[(heightmap_img.size[0]) * y + x] / 256
 				heightmap_img_pixels[x, y] = (height, height, height)
 		heightmap_img.save(self.basename + '_height.bmp')
-
+		'''
 		print 'Writing heightmap PNG'
 		heightmap_png_file = open(os.path.join(self.savedir,self.basename + '_height.png'), 'wb')
 		heightmap_png_writer = png.Writer(width=1 + self.mapx, height=1 + self.mapy, greyscale=True, bitdepth=16)
@@ -896,54 +902,56 @@ class SMFMapDecompiler:
 			feature['name'], feature['x'], feature['z'], feature['rotation'], feature['relativeSize']))
 		feature_file.close()
 
-		print 'loading tile files'
-		self.maptileheader = MapTileHeader_struct.unpack_from(self.smffile, self.tilesPtr)
-		self.numtilefiles, self.numtiles = self.maptileheader
-		self.tilefiles = []
-		tileoffset = self.tilesPtr + MapTileHeader_struct.size
-		for i in range(self.numtilefiles):
-			numtilesinfile = struct.unpack_from('< i', self.smffile, tileoffset)[0]
-			tileoffset += 4  # sizeof(int)
-			tilefilename = unpack_null_terminated_string(self.smffile, tileoffset)
-			tileoffset += len(tilefilename) + 1  # cause of null terminator
-			self.tilefiles.append(
-				#[tilefilename, numtilesinfile, open(filename.rpartition('\\')[0] + '\\' + tilefilename, 'rb').read()])
-				[tilefilename, numtilesinfile, open(os.path.join(self.savedir,tilefilename), 'rb').read()])
-			print tilefilename, 'has', numtilesinfile, 'tiles'
-		self.tileindices = struct.unpack_from('< %ii' % ((self.mapx / 4) * (self.mapy / 4)), self.smffile, tileoffset)
 
-		self.tiles = []
-		for tilefile in self.tilefiles:
-			tileFileHeader = TileFileHeader_struct.unpack_from(tilefile[2], 0)
-			magic, version, numTiles, tileSize, compressionType = tileFileHeader
-			# print tilefile[0],': magic,version,numTiles,tileSize,compressionType',magic,version,numTiles,tileSize,compressionType
-			for i in range(numTiles):
-				self.tiles.append(struct.unpack_from('< %is' % (SMALL_TILE_SIZE), tilefile[2],
-													 TileFileHeader_struct.size + i * SMALL_TILE_SIZE)[0])
+		if not skiptexture:
+			print 'loading tile files'
+			self.maptileheader = MapTileHeader_struct.unpack_from(self.smffile, self.tilesPtr)
+			self.numtilefiles, self.numtiles = self.maptileheader
+			self.tilefiles = []
+			tileoffset = self.tilesPtr + MapTileHeader_struct.size
+			for i in range(self.numtilefiles):
+				numtilesinfile = struct.unpack_from('< i', self.smffile, tileoffset)[0]
+				tileoffset += 4  # sizeof(int)
+				tilefilename = unpack_null_terminated_string(self.smffile, tileoffset)
+				tileoffset += len(tilefilename) + 1  # cause of null terminator
+				self.tilefiles.append(
+					#[tilefilename, numtilesinfile, open(filename.rpartition('\\')[0] + '\\' + tilefilename, 'rb').read()])
+					[tilefilename, numtilesinfile, open(os.path.join(self.savedir,tilefilename), 'rb').read()])
+				print tilefilename, 'has', numtilesinfile, 'tiles'
+			self.tileindices = struct.unpack_from('< %ii' % ((self.mapx / 4) * (self.mapy / 4)), self.smffile, tileoffset)
 
-		print 'Generating texture, this is very very slow (few minutes)'
-		textureimage = Image.new('RGB', (self.mapx * 8, self.mapy * 8), 'black')
-		textureimagepixels = textureimage.load()
-		for ty in range(self.mapy / 4):
-			# print 'row',ty
-			for tx in range(self.mapx / 4):
-				currtile = self.tiles[self.tileindices[(self.mapx / 4) * ty + tx]]
-				# print 'Tile',(self.mapx/4)*ty+tx
-				# one tile is 32x32, and pythonDecodeDXT1 will need one 'row' of data, assume this is 8*8 bytes
-				for rows in xrange(8):
-					# print "currtile",currtile
-					dxdata = currtile[rows * 64:(rows + 1) * 64]
-					# print len(dxdata),dxdata
-					dxtrows = pythonDecodeDXT1(dxdata)  # decode in 8 block chunks
-					for x in xrange(tx * 32, (tx + 1) * 32):
-						for y in xrange(ty * 32 + 4 * rows, ty * 32 + 4 + 4 * rows):
-							# print rows, tx,ty,x,y
-							# print dxtrows
-							oy = (ty * 32 + 4 * rows)
-							textureimagepixels[x, y] = (
-							ord(dxtrows[y - oy][3 * (x - tx * 32) + 0]), ord(dxtrows[y - oy][3 * (x - tx * 32) + 1]),
-							ord(dxtrows[y - oy][3 * (x - tx * 32) + 2]))
-		textureimage.save(self.basename + '_texture.bmp')
+			self.tiles = []
+			for tilefile in self.tilefiles:
+				tileFileHeader = TileFileHeader_struct.unpack_from(tilefile[2], 0)
+				magic, version, numTiles, tileSize, compressionType = tileFileHeader
+				# print tilefile[0],': magic,version,numTiles,tileSize,compressionType',magic,version,numTiles,tileSize,compressionType
+				for i in range(numTiles):
+					self.tiles.append(struct.unpack_from('< %is' % (SMALL_TILE_SIZE), tilefile[2],
+														 TileFileHeader_struct.size + i * SMALL_TILE_SIZE)[0])
+
+			print 'Generating texture, this is very very slow (few minutes)'
+			textureimage = Image.new('RGB', (self.mapx * 8, self.mapy * 8), 'black')
+			textureimagepixels = textureimage.load()
+			for ty in range(self.mapy / 4):
+				# print 'row',ty
+				for tx in range(self.mapx / 4):
+					currtile = self.tiles[self.tileindices[(self.mapx / 4) * ty + tx]]
+					# print 'Tile',(self.mapx/4)*ty+tx
+					# one tile is 32x32, and pythonDecodeDXT1 will need one 'row' of data, assume this is 8*8 bytes
+					for rows in xrange(8):
+						# print "currtile",currtile
+						dxdata = currtile[rows * 64:(rows + 1) * 64]
+						# print len(dxdata),dxdata
+						dxtrows = pythonDecodeDXT1(dxdata)  # decode in 8 block chunks
+						for x in xrange(tx * 32, (tx + 1) * 32):
+							for y in xrange(ty * 32 + 4 * rows, ty * 32 + 4 + 4 * rows):
+								# print rows, tx,ty,x,y
+								# print dxtrows
+								oy = (ty * 32 + 4 * rows)
+								textureimagepixels[x, y] = (
+								ord(dxtrows[y - oy][3 * (x - tx * 32) + 0]), ord(dxtrows[y - oy][3 * (x - tx * 32) + 1]),
+								ord(dxtrows[y - oy][3 * (x - tx * 32) + 2]))
+			textureimage.save(self.basename + '_texture.bmp')
 		infofile = open(os.path.join(self.savedir,self.basename + '_compilation_settings.txt'), 'w')
 
 		infofile.write('-%s\n%s\n' % ('n', str(self.minHeight)))
@@ -1022,6 +1030,7 @@ if __name__ == "__main__":
 						default=True, action='store_true')
 	# parser.add_argument('-q', '--quick', help='|FAST| Quick compilation (lower texture quality)', action='store_true') //not implemented yet
 	parser.add_argument('-d', '--decompile', help='|DECOMPILE| Decompiles a map to everything you need to recompile it', type=str)
+	parser.add_argument('-s', '--skiptexture', help='|DECOMPILE| Skip generating the texture during decompilation', default = False, action = 'store_true')
 	parser.description = 'Spring RTS SMF map compiler/decompiler by Beherith (mysterme@gmail.com). You must select at least a texture and a heightmap for compilation'
 	parser.epilog = 'Remember, you can also use this from the command line!'
 
@@ -1030,7 +1039,7 @@ if __name__ == "__main__":
 		parsed_args = self.parse_args()
 		print (parsed_args)
 		if parsed_args.decompile != '' and parsed_args.decompile != None:
-			mymap = SMFMapDecompiler(parsed_args.decompile)
+			mymap = SMFMapDecompiler(parsed_args.decompile,skiptexture=parsed_args.skiptexture)
 		else:				
 			compilesuccess = compileSMF(parsed_args)
 			if haswinsound and compilesuccess == 0:

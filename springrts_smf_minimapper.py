@@ -4,6 +4,7 @@ import os
 import sys
 import shutil
 print ("Usage: command line parameter is a path to unzip maps from, defaults to cwd, puts minimap dds into cwd")
+print ("Works best if maps are in cwd, otherwise it bugs out. Also appends map size to .smf name")
 workdir =  os.getcwd() if len(sys.argv)<2 else sys.argv[1]
 tmpdir = os.path.join(workdir,'temp')
 os.mkdir(tmpdir)
@@ -20,4 +21,7 @@ for file in os.listdir( workdir):
 		for smffile in os.listdir(os.path.join(unzipdir,'maps')):
 			if smffile.lower().endswith('.smf'):
 				SMFMapDecompiler(os.path.join(unzipdir,'maps',smffile),minimaponly = True)
-shutil.rmtree(tmpdir)
+try:
+	shutil.rmtree(tmpdir)
+except:
+	print ("Failed to remove ",tmpdir)
