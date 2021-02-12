@@ -235,10 +235,10 @@ def compileSMF(myargs):
 	if intex.mode == 'RGB':
 		print 'Texture image %s is RGB, just making sure you dont have alpha in it...' % (myargs.intex)
 	elif intex.mode == 'RGBA':
-		print 'Texture image %s is RGBA, thus has an alpha channel. Make absolutely sure that you need this or else consider removing the alpha, as this can cause undesired artefacts with voidground or voidwater tags!' % (
+		print 'MEGA WARNING: Texture image %s is RGBA, thus has an alpha channel. Make absolutely sure that you need this or else consider removing the alpha, as this can cause undesired artefacts with voidground or voidwater tags! I will try to continue, but no guarantees.' % (
 		myargs.intex)
 	else:
-		print 'Texture image %s is neither RGB nor RGBA, but is %s this may cause unexpected issues downstream!' % (
+		print 'MEGA WARNING: Texture image %s is neither RGB nor RGBA, but is %s this may cause unexpected issues downstream! I will try to continue, but no guarantees.' % (
 		myargs.intex, intex.mode)
 	# open heightmap:
 	heights = []
