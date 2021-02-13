@@ -12,7 +12,7 @@ import os
 import math
 import gc
 
-pymapconv_version = "3.3"
+pymapconv_version = "3.4"
 
 print 'Welcome to the SMF compiler/decompiler by Beherith (mysterme@gmail.com) ' + pymapconv_version
 
@@ -256,7 +256,7 @@ def compileSMF(myargs):
 		pngheight = png.Reader(
 			filename=myargs.heightmap)  # (32, 32, <itertools.imap object at 0x10b7eb0>, {'greyscale': True,'alpha': False, 'interlace': 0, 'bitdepth': 2, 'gamma': 1.0})
 		pngheight = pngheight.read()
-
+		print 'Your heightmap is png, should be 16bit depth greyscale, no alpha, no paletteing, and is',pngheight[3]
 		if pngheight[3]['bitdepth'] != 16:
 			print 'Error: heightmap %s must be 16 bit depth, instead it is %i. Dont use .png for 8 bit heightmaps, use .bmp!'(myargs.heightmap, pngheight[3]['bitdepth'])
 			return -1
@@ -293,7 +293,7 @@ def compileSMF(myargs):
 			print("lerp done")
 			for row in range(loresheightmap.size[1]):
 				for col in range(loresheightmap.size[0]):
-					heights.append(loresheightmap_pixels[col,row])
+					heights.append(max(0,min(loresheightmap_pixels[col,row],65534)))
 
 		elif pngheight[0] * pngheight[1] != (mapx + 1) * (mapy + 1):
 			print 'Error: Incorrect %s heightmap dimensions of (%ix%i), image size should be exactly %ix%i for a spring map size of (%ix%i)' % (
@@ -345,18 +345,22 @@ def compileSMF(myargs):
 			print 'Info: Your metal map is of the correct size. Using the red channel of your (%ix%i) image.'%(metalimage.size[0], metalimage.size[1])
 		metalimage_pixels = metalimage.load()
 		metalmaphist = {}
+
+		if metalimage.mode not in ['L','I','RGB','RGBA']:
+			print "MEGA WARNING: your metalmap should be L, I, RGB or RGBA, but is:", metalimage.mode, ". Proceeding anyway, but no guarantees!"
 		for row in range(metalimage.size[1]):
 			for col in range(metalimage.size[0]):
 				metal = metalimage_pixels[col, row]
 				metalmaphist[metal] = 1 if metal not in metalmaphist else metalmaphist[metal] + 1
 				if metalimage.mode == 'L': # we are in 8 bit greyscale png mode
 					metalmap.append(min(255,metalimage_pixels[col, row]))
-				if metalimage.mode == 'I': # we are in 16 bit png mode
+				elif metalimage.mode == 'I': # we are in 16 bit png mode
 					metalmap.append(metalimage_pixels[col, row]/256.0)
-				else :
+				elif metalimage.mode == 'RGB' or metalimage.mode == 'RGBA':
 					metalmap.append(metalimage_pixels[col, row][0])
-				if metalmap[-1] < 0 :
-					metalmap[-1] = 0
+				else:
+					metalmap.append(0)
+				metalmap[-1] = max(0,min(255,metalmap[-1]))
 	else:
 		metalmap = [0] * (mapy * mapx / 4)
 
@@ -413,7 +417,9 @@ def compileSMF(myargs):
 		except:  # If the file cannot be found.
 			print "Error: Unable to open Image file, FileNotFoundError: ", myargs.featuremap
 			return -1
-
+		if featuremap.mode not in ['RGB', 'RGBA']:
+			print "Error: Featuremap should be RGB or RGBA, exiting."
+			return -1
 		if featuremap.size != (mapx, mapy):
 			print 'Error: Incorrect %s featuremap dimensions of (%ix%i), image size should be exactly %ix%i for a spring map size of (%ix%i)' % (
 				myargs.featuremap, featuremap.size[0], featuremap.size[1], mapx, mapy, springmapx, springmapy)
@@ -458,6 +464,7 @@ def compileSMF(myargs):
 	if myargs.grassmap:
 		try:
 			grassmap = Image.open(myargs.grassmap)
+			print "Grassmap should be RGB, RBGA or 1 channel greyscale. It is:", grassmap.mode
 		except:  # If the file cannot be found.
 			print "Error: Unable to open Image file, FileNotFoundError: ", myargs.grassmap
 			return -1
@@ -469,8 +476,13 @@ def compileSMF(myargs):
 		grassmap_pixels = grassmap.load()
 		for row in range(grassmap.size[1]):
 			for col in range(grassmap.size[0]):
-				if sum(grassmap_pixels[col, row]) != 0:
-					vegmap[(mapx / 4) * row + col] = 1
+				if grassmap.mode not in ['RGB' ,'RGBA']:
+					if grassmap_pixels[col, row] != 0:
+						vegmap[(mapx / 4) * row + col] = 1
+				else:
+					if sum(grassmap_pixels[col, row]) != 0:
+						vegmap[(mapx / 4) * row + col] = 1
+
 	print 'Total grass coverage of map is %f percent' % (100.0 * sum(vegmap) / float(mapx * mapy / 16))
 	# actually load the texture image:
 
@@ -530,16 +542,16 @@ def compileSMF(myargs):
 		pass
 	# todo: handle alpha in intex properly!
 	print 'Writing tiles',
-	extension = 'bmp'
+	extension = 'BMP'
 	if intex.mode == 'RGBA':
-		extension = 'tiff'
+		extension = 'TIFF'
 	for tilex in range(springmapx / 2):
 		for tiley in range(springmapy / 2):
 			tileindex = tiley * (springmapx / 2) + tilex
 			newtile = intex.crop((1024 * tilex, 1024 * tiley, 1024 * (tilex + 1), 1024 * (
 			tiley + 1)))  # The box is a 4-tuple defining the left, upper, right, and lower pixel coordinate.
 			print tileindex,
-			newtile.save(os.path.join('temp', 'temp%i.%s' % (tileindex, extension)))
+			newtile.save(os.path.join('temp', 'temp%i.%s' % (tileindex, extension)), format = extension)
 	print ''
 
 	print 'Converting to dds',
@@ -579,26 +591,29 @@ def compileSMF(myargs):
 	minimapfilename = os.path.join('temp', 'minimap.bmp') #else we can get spurious alpha pixels in minimap
 	compressionmethod = 'dxt1a'
 
-	print 'Creating minimap', minimapfilename,'using the command:',
+	print 'Creating minimap', minimapfilename,'using the command:'
 	if myargs.minimap:
 		try:
 			minimapoverride = Image.open(myargs.minimap)
 			minimapoverride = minimapoverride.resize((1024,1024), Image.ANTIALIAS)
 			if minimapoverride.mode == 'RGBA':
-				minimapfilename = minimapfilename = os.path.join('temp', 'minimap.tiff')
-			minimapoverride.save(minimapfilename)
+				minimapfilename =  os.path.join('temp', 'minimap.TIFF')
+				minimapoverride.save(minimapfilename,format = 'TIFF')
+			else:
+				minimapfilename =  os.path.join('temp', 'minimap.bmp')
+				minimapoverride.save(minimapfilename,format = 'BMP')
 		except:
 			print ("Failed to open minimap file name:", myargs.minimap)
-
 	else:
+		mini = intex.resize((1024, 1024), Image.ANTIALIAS)
 		if intex.mode == 'RGBA':
 			minimapfilename = os.path.join('temp', 'minimap.tiff')
 			compressionmethod = 'dxt1a'
-		mini = intex.resize((1024, 1024), Image.ANTIALIAS)
-		mini.save(minimapfilename)
+			mini.save(minimapfilename, format = 'TIFF')
+		else:
+			mini.save(minimapfilename, format = 'BMP')
 	if myargs.linux:
-		cmd = 'convert -format dds -define dds:mipmaps=8 -define dds:compression=dxt1 %s temp/minimap.dds' % (
-		minimapfilename)
+		cmd = 'convert -format dds -define dds:mipmaps=8 -define dds:compression=dxt1 %s temp/minimap.dds' % ( 	minimapfilename)
 		print cmd
 		os.system(cmd)
 	else:
