@@ -13,6 +13,9 @@ Miraculously self documenting.
 ## NEW FEATURES:
 
 Added NVTT_DragAndDropConvertToDDSTools.7z, a set of tools for very easy conversion of map images of any size to .DDS format! Just drag and drop images onto the .bat files!
+### Version 3.4
+- Minimap autosizing is supported now
+- Minor bugfixes :D
 
 ### Version 3.1
 - Heightmaps same size as the diffuse texture are supported, and resized intelligently to get pixel-perfect heightmaps (solves the X to X/8 + 1 image interpolation problem)
