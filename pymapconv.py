@@ -12,7 +12,7 @@ import os
 import math
 import gc
 
-pymapconv_version = "3.4"
+pymapconv_version = "3.5"
 
 print 'Welcome to the SMF compiler/decompiler by Beherith (mysterme@gmail.com) ' + pymapconv_version
 
@@ -588,14 +588,15 @@ def compileSMF(myargs):
 			sourceoffset += 524288 / (1 << (i * 2))
 		return outtile
 	
-	minimapfilename = os.path.join('temp', 'minimap.bmp') #else we can get spurious alpha pixels in minimap
-	compressionmethod = 'dxt1a'
+	minimapfilename = os.path.join('temp', 'minimap.bmp')
+	compressionmethod = 'dxt1a' #else we can get spurious alpha pixels in minimap
 
 	print 'Creating minimap', minimapfilename,'using the command:'
 	if myargs.minimap:
 		try:
 			minimapoverride = Image.open(myargs.minimap)
 			minimapoverride = minimapoverride.resize((1024,1024), Image.ANTIALIAS)
+			print "Opened custom minimap image", myargs.minimap, "in mode", minimapoverride.mode
 			if minimapoverride.mode == 'RGBA':
 				minimapfilename =  os.path.join('temp', 'minimap.TIFF')
 				minimapoverride.save(minimapfilename,format = 'TIFF')
@@ -608,7 +609,6 @@ def compileSMF(myargs):
 		mini = intex.resize((1024, 1024), Image.ANTIALIAS)
 		if intex.mode == 'RGBA':
 			minimapfilename = os.path.join('temp', 'minimap.tiff')
-			compressionmethod = 'dxt1a'
 			mini.save(minimapfilename, format = 'TIFF')
 		else:
 			mini.save(minimapfilename, format = 'BMP')
@@ -728,7 +728,7 @@ def compileSMF(myargs):
 
 	smffile.close()
 
-	if myargs.clean:
+	if not myargs.dirty:
 		print 'Cleaning up temp dir...'
 		if myargs.linux:
 			os.system('rm -r ./temp')
@@ -1040,9 +1040,9 @@ if __name__ == "__main__":
 	parser.add_argument('-u', '--linux',
 						help='|LINUX| Check this if you are running linux and wish to use imagemagicks convert utility instead of nvdxt.exe',
 						default=False, action='store_true')
-	parser.add_argument('-c', '--clean',
-						help='|CLEAN| Remove temp directory after compilation',
-						default=True, action='store_true')
+	parser.add_argument('-c', '--dirty',
+						help='|Dirty| Keep temp directory after compilation',
+						default=False, action='store_true')
 	# parser.add_argument('-q', '--quick', help='|FAST| Quick compilation (lower texture quality)', action='store_true') //not implemented yet
 	parser.add_argument('-d', '--decompile', help='|DECOMPILE| Decompiles a map to everything you need to recompile it', type=str)
 	parser.add_argument('-s', '--skiptexture', help='|DECOMPILE| Skip generating the texture during decompilation', default = False, action = 'store_true')
