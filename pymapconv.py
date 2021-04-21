@@ -12,7 +12,7 @@ import os
 import math
 import gc
 
-pymapconv_version = "3.5"
+pymapconv_version = "3.6"
 
 print 'Welcome to the SMF compiler/decompiler by Beherith (mysterme@gmail.com) ' + pymapconv_version
 
@@ -429,8 +429,7 @@ def compileSMF(myargs):
 			for col in range(featuremap.size[0]):
 				pixel = featuremap_pixels[col, row]
 				if col % 2 and row % 2:  # grass at half rez
-					if random.randint(0, 255) < pixel[2]:
-						vegmap[(mapx / 4) * row + col] = 1
+					vegmap[(mapx / 4) * row + col] = min(254, pixel[2])
 
 				if pixel[1] == 255:  # geovent
 					featureplacement.append(
@@ -478,10 +477,10 @@ def compileSMF(myargs):
 			for col in range(grassmap.size[0]):
 				if grassmap.mode not in ['RGB' ,'RGBA']:
 					if grassmap_pixels[col, row] != 0:
-						vegmap[(mapx / 4) * row + col] = 1
+						vegmap[(mapx / 4) * row + col] = min(254,grassmap_pixels[col, row])
 				else:
 					if sum(grassmap_pixels[col, row]) != 0:
-						vegmap[(mapx / 4) * row + col] = 1
+						vegmap[(mapx / 4) * row + col] = min(254,int(sum(grassmap_pixels[col, row])/len(grassmap_pixels[col, row])))
 
 	print 'Total grass coverage of map is %f percent' % (100.0 * sum(vegmap) / float(mapx * mapy / 16))
 	# actually load the texture image:
@@ -863,14 +862,27 @@ class SMFMapDecompiler:
 												   extraoffset)
 				grassmap_img = Image.new('RGB', (self.mapx / 4, self.mapy / 4), 'black')
 				grassmap_img_pixels = grassmap_img.load()
+
+
+				grassValuemax = 0
 				for x in range(grassmap_img.size[0]):
 					for y in range(grassmap_img.size[1]):
 						grass = self.grassmap[(grassmap_img.size[0]) * y + x]
-						if grass == 1:
+						grassValuemax = max(grassValuemax, grass)
+
+				for x in range(grassmap_img.size[0]):
+					for y in range(grassmap_img.size[1]):
+						grass = self.grassmap[(grassmap_img.size[0]) * y + x]
+						if grassValuemax == 1 and grass == 1:
 							grass = 255
-						else:
-							grass = 0
 						grassmap_img_pixels[x, y] = (grass, grass, grass)
+
+				if grassValuemax == 0:
+					print "Map has no grass, but writing image anyway"
+				elif grassValuemax == 1:
+					print "Map seems to have old style (binary) grass"
+				else:
+					print "Map seems to have new style 0-254 awesome grass", grassValuemax
 				grassmap_img.save(self.basename + '_grass.bmp')
 
 		# MapFeatureHeader is followed by numFeatureType zero terminated strings indicating the names
