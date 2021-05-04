@@ -12,7 +12,7 @@ import os
 import math
 import gc
 
-pymapconv_version = "3.6"
+pymapconv_version = "3.7"
 
 print 'Welcome to the SMF compiler/decompiler by Beherith (mysterme@gmail.com) ' + pymapconv_version
 
@@ -325,7 +325,12 @@ def compileSMF(myargs):
 			return -1
 		for row in range(otherheight.size[1]):
 			for col in range(otherheight.size[0]):
-				heights.append(sum(otherheight_pixels[col, row]) * 256 / 3)
+				numchannels = 1
+				try:
+					numchannels = len(otherheight_pixels[col, row])
+				except:
+					pass
+				heights.append(sum(otherheight_pixels[col, row]) * 255 / numchannels)
 
 	# open metalmap:
 	metalmap = []
