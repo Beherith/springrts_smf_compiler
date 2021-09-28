@@ -12,7 +12,7 @@ import os
 import math
 import gc
 
-pymapconv_version = "3.7"
+pymapconv_version = "3.8"
 
 print 'Welcome to the SMF compiler/decompiler by Beherith (mysterme@gmail.com) ' + pymapconv_version
 
@@ -286,8 +286,15 @@ def compileSMF(myargs):
 					lerp_pixels[o, y] = lerp_pixels[4, y]
 					lerp_pixels[p - o, y] = lerp_pixels[p - 4, y]
 
-			#lerppng.save('lerptest.png')
-			loresheightmap = lerppng.resize((mapx+1, mapy+1),Image.LANCZOS)
+			#lerppng.save('lerptest.png')			
+			filter = Image.LANCZOS
+			if myargs.highresheightmapfilter == "bilinear":
+				filter = Image.BILINEAR
+			if myargs.highresheightmapfilter == "nearest":
+				filter = Image.NEAREST
+			
+			
+			loresheightmap = lerppng.resize((mapx+1, mapy+1),filter)
 			#loresheightmap.save('lerptestlanczos.png')
 			loresheightmap_pixels = loresheightmap.load()
 			print("lerp done")
@@ -1054,6 +1061,9 @@ if __name__ == "__main__":
 
 	# parser.add_argument('-s', '--justsmf', help = 'Just create smf file, dont make tile file (for quick recompilations)', default = 0, type=int)
 	parser.add_argument('-v', '--nvdxt_options', help='|NVDXT| compression options ', default='-Sinc -quality_highest')
+	parser.add_argument('--highresheightmapfilter',
+						help='Which filter to use when downsampling highres heightmap: [lanczos, bilinear, nearest] ',
+						default="lanczos", type = str)
 	parser.add_argument('-u', '--linux',
 						help='|LINUX| Check this if you are running linux and wish to use imagemagicks convert utility instead of nvdxt.exe',
 						default=False, action='store_true')
