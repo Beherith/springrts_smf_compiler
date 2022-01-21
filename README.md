@@ -32,13 +32,23 @@ Ensure that nvdxt.exe is next to it.
 
 ### Windows development:
 
-Python 2.7, 32bit -  https://www.python.org/downloads/
+Download Anaconda2 64bit - https://repo.anaconda.com/archive/Anaconda2-2019.10-Windows-x86_64.exe
+Download upx - https://github.com/upx/upx/releases/download/v3.96/upx-3.96-win64.zip
+Download PyQt4 https://sourceforge.net/projects/pyqt/files/PyQt4/PyQt-4.11.4/
+	Install to pymapconv environment see below
 
-PIL (Python Image Library) -http://www.pythonware.com/products/pil/ 
+## In anaconda console - Create environment and install pyinstaller
+* conda create -n pymapconv python=2.7
+* conda activate pymapconv
+* conda install -c conda-forge pyinstaller - https://stackoverflow.com/a/66363079/7671671
 
-PyQt4 - https://riverbankcomputing.com/software/pyqt/download (note: PyQt no longer provides Windows binaries, but you can obtain slightly old and suitable ones from https://sourceforge.net/projects/pyqt/files/PyQt4/PyQt-4.11.4/)
+## Compile instructions
+activate pymapconv
+pyinstaller --upx-dir c:\somepath\Anaconda2\upx\ --onefile pymapconv.py
 
-## Linux (e.g. Ubuntu 14.04 and up), or for development it requires:
+
+
+### Linux (e.g. Ubuntu 14.04 and up), or for development it requires:
 Youre a big boy, go get the libs:
 Python 2.7
 Pillow (sudo pip install Pillow)
