@@ -2,6 +2,7 @@
 # PD license by Beherith
 # You like pasghetti code? No problem, you get pasghetti code.
 import sys
+from sys import exit
 import struct
 from PIL import Image
 import png
@@ -14,7 +15,14 @@ import gc
 
 pymapconv_version = "3.8"
 
-print 'Welcome to the SMF compiler/decompiler by Beherith (mysterme@gmail.com) ' + pymapconv_version
+def print_flushed(message, args=""):
+	print (message, args)
+	sys.stdout.flush()
+
+
+print_flushed ('Welcome to the SMF compiler/decompiler by Beherith (mysterme@gmail.com) ' + pymapconv_version)
+# print_flushed ("FUCK PYTHON")
+
 
 haswinsound = False
 try:
@@ -84,7 +92,7 @@ def pythonDecodeDXT1(data):  # Python-only DXT1 decoder; this is slow!
 	for xb in xrange(blocks):
 		# Decode next 8-byte block.
 		c0, c1, bits = struct.unpack('<HHI', data[xb * 8:xb * 8 + 8])
-		# print c0,c1,bits
+		# print_flushed (c0,c1,bits)
 		# color 0, packed 5-6-5
 		b0 = (c0 & 0x1f) << 3
 		g0 = ((c0 >> 5) & 0x3f) << 2
@@ -187,7 +195,7 @@ def unpack_null_terminated_string(data, offset):
 	# nextchar = 'X'
 	while True:
 		if len(data) <= offset + len(result):
-			print "Failed to read a null terminated string from input file because the offset is past the end of the file! Last result:"+result
+			print_flushed ("Failed to read a null terminated string from input file because the offset is past the end of the file! Last result:"+result)
 			#raise Exception("Failed to read a null terminated string from input file because the offset is past the end of the file! Last result:"+result)
 			return ""
 		nextchar = struct.unpack_from('c', data, offset + len(result))[0]
@@ -202,22 +210,23 @@ def unpack_null_terminated_string(data, offset):
 def compileSMF(myargs):
 	verbose = True
 
-	print 'Compiling SMF with the following options:', myargs
+	print_flushed ('Compiling SMF with the following options:', myargs)
 	if myargs.outfile == '':
-		print 'Please specify a name for the map!'
+		print_flushed ('Please specify a name for the map!')
 		return -1
 
 	if '.smf' not in myargs.outfile:
 		myargs.outfile += '.smf'
-		print 'Warning: The .smf extension was omitted from the output file name, output will be:', myargs.outfile
+		print_flushed ('Warning: The .smf extension was omitted from the output file name, output will be:', myargs.outfile)
 
 	# open texture, get sizes
 	Image.MAX_IMAGE_PIXELS = 16000000000
 	try:
 		intex = Image.open(myargs.intex)
 	except:# If the file cannot be found.
-		print "Error: Unable to open Image file, FileNotFoundError: ", myargs.intex
+		print_flushed ("Error: Unable to open Image file, FileNotFoundError: ", myargs.intex)
 		return -1
+	
 
 	intex_pixels = intex.load()
 	texw, texh = intex.size
@@ -226,28 +235,28 @@ def compileSMF(myargs):
 	springmapx = texw / 512
 	springmapy = texh / 512
 	if (texh % 1024 != 0) or (texw % 1024 != 0):
-		print 'Error: Texture Image dimensions are not multiples of 1024! (%ix%i) Aborting' % (texw, texh)
+		print_flushed ('Error: Texture Image dimensions are not multiples of 1024! (%ix%i) Aborting' % (texw, texh))
 		return -1
 	else:
-		print 'Texture image %s seems to have the correct dimensions (%ix%i) for a spring map size of (%ix%i)' % (
-			myargs.intex, texw, texh, springmapx, springmapy)
+		print_flushed ('Texture image %s seems to have the correct dimensions (%ix%i) for a spring map size of (%ix%i)' % (
+			myargs.intex, texw, texh, springmapx, springmapy))
 	# do some checks for alpha in texture
 	if intex.mode == 'RGB':
-		print 'Texture image %s is RGB, just making sure you dont have alpha in it...' % (myargs.intex)
+		print_flushed ('Texture image %s is RGB, just making sure you dont have alpha in it...' % (myargs.intex))
 	elif intex.mode == 'RGBA':
-		print 'MEGA WARNING: Texture image %s is RGBA, thus has an alpha channel. Make absolutely sure that you need this or else consider removing the alpha, as this can cause undesired artefacts with voidground or voidwater tags! I will try to continue, but no guarantees.' % (
-		myargs.intex)
+		print_flushed ('MEGA WARNING: Texture image %s is RGBA, thus has an alpha channel. Make absolutely sure that you need this or else consider removing the alpha, as this can cause undesired artefacts with voidground or voidwater tags! I will try to continue, but no guarantees.' % (
+		myargs.intex))
 	else:
-		print 'MEGA WARNING: Texture image %s is neither RGB nor RGBA, but is %s this may cause unexpected issues downstream! I will try to continue, but no guarantees.' % (
-		myargs.intex, intex.mode)
+		print_flushed ('MEGA WARNING: Texture image %s is neither RGB nor RGBA, but is %s this may cause unexpected issues downstream! I will try to continue, but no guarantees.' % (
+		myargs.intex, intex.mode))
 	# open heightmap:
 	heights = []
 	if myargs.heightmap.lower().endswith('.raw') or  myargs.heightmap.lower().endswith('.r16'):
 		rawheight = open(myargs.heightmap, 'rb').read()
 		expectedheightmapsize = (mapx + 1) * (mapy + 1) * 2
 		if len(rawheight) != expectedheightmapsize:
-			print 'Error: Incorrect %s raw heightmap dimensions, file size should be exactly %i (%ix%i) for a spring map size of (%ix%i)' % (
-				myargs.heightmap, expectedheightmapsize, mapx + 1, mapy + 1, springmapx, springmapy)
+			print_flushed ('Error: Incorrect %s raw heightmap dimensions, file size should be exactly %i (%ix%i) for a spring map size of (%ix%i)' % (
+				myargs.heightmap, expectedheightmapsize, mapx + 1, mapy + 1, springmapx, springmapy))
 			return -1
 		else:
 			heights = struct.unpack('< ' + 'H' * (expectedheightmapsize / 2), rawheight)
@@ -256,19 +265,19 @@ def compileSMF(myargs):
 		pngheight = png.Reader(
 			filename=myargs.heightmap)  # (32, 32, <itertools.imap object at 0x10b7eb0>, {'greyscale': True,'alpha': False, 'interlace': 0, 'bitdepth': 2, 'gamma': 1.0})
 		pngheight = pngheight.read()
-		print 'Your heightmap is png, should be 16bit depth greyscale, no alpha, no paletteing, and is',pngheight[3]
+		print_flushed ('Your heightmap is png, should be 16bit depth greyscale, no alpha, no paletteing, and is',pngheight[3])
 		if pngheight[3]['bitdepth'] != 16:
-			print 'Error: heightmap %s must be 16 bit depth, instead it is %i. Dont use .png for 8 bit heightmaps, use .bmp!'(myargs.heightmap, pngheight[3]['bitdepth'])
+			print_flushed ('Error: heightmap %s must be 16 bit depth, instead it is %i. Dont use .png for 8 bit heightmaps, use .bmp!'(myargs.heightmap, pngheight[3]['bitdepth']))
 			return -1
 		if pngheight[3]['greyscale'] == False:
-			print 'Error: heightmap %s must be greyscale!' % (myargs.heightmap)
+			print_flushed ('Error: heightmap %s must be greyscale!' % (myargs.heightmap))
 			return -1
 		if pngheight[3]['alpha'] == True:
-			print 'Error: heightmap %s must not contain an alpha channel!' % (myargs.heightmap)
+			print_flushed ('Error: heightmap %s must not contain an alpha channel!' % (myargs.heightmap))
 			return -1
 
 		if  pngheight[0] == mapx * 8 and pngheight[1] == mapy * 8:
-			print 'Warning: You have activated special high-res heightmap mode! Congrats!'
+			print_flushed ('Warning: You have activated special high-res heightmap mode! Congrats!')
 			highresheightmap = Image.open(myargs.heightmap)
 			lerppng = Image.new('I',(mapx*8+8,mapy*8+8), color = 0)
 			lerppng.paste(highresheightmap, (4,4))
@@ -303,11 +312,11 @@ def compileSMF(myargs):
 					heights.append(max(0,min(loresheightmap_pixels[col,row],65534)))
 
 		elif pngheight[0] * pngheight[1] != (mapx + 1) * (mapy + 1):
-			print 'Error: Incorrect %s heightmap dimensions of (%ix%i), image size should be exactly %ix%i for a spring map size of (%ix%i)' % (
-				myargs.heightmap, pngheight[0], pngheight[1], mapx + 1, mapy + 1, springmapx, springmapy)
+			print_flushed ('Error: Incorrect %s heightmap dimensions of (%ix%i), image size should be exactly %ix%i for a spring map size of (%ix%i)' % (
+				myargs.heightmap, pngheight[0], pngheight[1], mapx + 1, mapy + 1, springmapx, springmapy))
 			return -1
 		else:
-			print 'Info: Your heightmap is 16bit .png and correctly sized at (%ix%i)'%( pngheight[0] , pngheight[1])
+			print_flushed ('Info: Your heightmap is 16bit .png and correctly sized at (%ix%i)'%( pngheight[0] , pngheight[1]))
 			# do a check to make sure the full 16-bit range of heights are used!
 			heightlevelshist = {}
 			for row in pngheight[2]:
@@ -317,18 +326,18 @@ def compileSMF(myargs):
 						heightlevelshist[col]+=1
 					else:
 						heightlevelshist[col]=1
-			print 'You are using %i unique height levels in your heightmap.' % (len(heightlevelshist))
+			print_flushed ('You are using %i unique height levels in your heightmap.' % (len(heightlevelshist)))
 			if len(heightlevelshist) <= 256 :
-				print 'Warning: Even though you have specified a 16-bit heightmap, you are only using %i unique height levels.' % (len(heightlevelshist))
-				print 'Warning: This may result in terracing, consider using some surface blur on your heightmap to utilize full 16-bit depth!'
+				print_flushed ('Warning: Even though you have specified a 16-bit heightmap, you are only using %i unique height levels.' % (len(heightlevelshist)))
+				print_flushed ('Warning: This may result in terracing, consider using some surface blur on your heightmap to utilize full 16-bit depth!')
 
 	else:
-		print 'Warning: you are using an 8-bit heightmap. This will most likely result in ugly terracing effects, so consider switching to 16-bit depth .png!'
+		print_flushed ('Warning: you are using an 8-bit heightmap. This will most likely result in ugly terracing effects, so consider switching to 16-bit depth .png!')
 		otherheight = Image.open(myargs.heightmap)
 		otherheight_pixels = otherheight.load()
 		if otherheight.size != (mapx + 1, mapy + 1):
-			print 'Error: Incorrect %s heightmap dimensions of (%ix%i), image size should be exactly %ix%i for a spring map size of (%ix%i)' % (
-				myargs.heightmap, otherheight.size[0], otherheight.size[1], mapx + 1, mapy + 1, springmapx, springmapy)
+			print_flushed ('Error: Incorrect %s heightmap dimensions of (%ix%i), image size should be exactly %ix%i for a spring map size of (%ix%i)' % (
+				myargs.heightmap, otherheight.size[0], otherheight.size[1], mapx + 1, mapy + 1, springmapx, springmapy))
 			return -1
 		for row in range(otherheight.size[1]):
 			for col in range(otherheight.size[0]):
@@ -345,21 +354,21 @@ def compileSMF(myargs):
 		try:
 			metalimage = Image.open(myargs.metalmap)
 		except:  # If the file cannot be found.
-			print "Error: Unable to open Image file, FileNotFoundError: ", myargs.metalmap
+			print_flushed ("Error: Unable to open Image file, FileNotFoundError: ", myargs.metalmap)
 			return -1
 
 		if metalimage.size != (mapx / 2, mapy / 2):
-			print 'Warning: Incorrect %s metal dimensions of (%ix%i), image size should be %ix%i for a spring map size of (%ix%i) ' % (
-				myargs.metalmap, metalimage.size[0], metalimage.size[1], mapx / 2, mapy / 2, springmapx, springmapy)
-			print 'Rescaling metalmap %s to (%ix%i)' % (myargs.metalmap, mapx / 2, mapy / 2)
+			print_flushed ('Warning: Incorrect %s metal dimensions of (%ix%i), image size should be %ix%i for a spring map size of (%ix%i) ' % (
+				myargs.metalmap, metalimage.size[0], metalimage.size[1], mapx / 2, mapy / 2, springmapx, springmapy))
+			print_flushed ('Rescaling metalmap %s to (%ix%i)' % (myargs.metalmap, mapx / 2, mapy / 2))
 			metalimage = metalimage.resize((mapx / 2, mapy / 2), Image.BILINEAR)
 		else:
-			print 'Info: Your metal map is of the correct size. Using the red channel of your (%ix%i) image.'%(metalimage.size[0], metalimage.size[1])
+			print_flushed ('Info: Your metal map is of the correct size. Using the red channel of your (%ix%i) image.'%(metalimage.size[0], metalimage.size[1]))
 		metalimage_pixels = metalimage.load()
 		metalmaphist = {}
 
 		if metalimage.mode not in ['L','I','RGB','RGBA']:
-			print "MEGA WARNING: your metalmap should be L, I, RGB or RGBA, but is:", metalimage.mode, ". Proceeding anyway, but no guarantees!"
+			print_flushed ("MEGA WARNING: your metalmap should be L, I, RGB or RGBA, but is:", metalimage.mode, ". Proceeding anyway, but no guarantees!")
 		for row in range(metalimage.size[1]):
 			for col in range(metalimage.size[0]):
 				metal = metalimage_pixels[col, row]
@@ -377,7 +386,7 @@ def compileSMF(myargs):
 		metalmap = [0] * (mapy * mapx / 4)
 
 	# if myargs.invert:
-	#	print 'Flipping heightmap upside down is not implemented yet :('
+	#	print_flushed ('Flipping heightmap upside down is not implemented yet :(')
 	# newheights=[]
 
 	# load features from featureplacement;
@@ -404,7 +413,7 @@ def compileSMF(myargs):
 						try:
 							myfeature[key] = float(val)
 						except ValueError:
-							print 'Featureplacement: unable to parse line %s for floats at %s' % (str(line), key)
+							print_flushed ('Featureplacement: unable to parse line %s for floats at %s' % (str(line), key))
 			featureplacement.append(myfeature)
 
 	# load features from featuremap
@@ -418,7 +427,7 @@ def compileSMF(myargs):
 				try:
 					featurelist.append((line[0], int(line[1])))
 				except ValueError:
-					print 'Failed to parse line %s in featurelist:' % (str(line))
+					print_flushed ('Failed to parse line %s in featurelist:' % (str(line)))
 			else:
 				featurelist.append((line[0], 0))
 	vegmap = [0] * ((mapx / 4) * (mapy / 4))
@@ -427,14 +436,14 @@ def compileSMF(myargs):
 		try:
 			featuremap = Image.open(myargs.featuremap)
 		except:  # If the file cannot be found.
-			print "Error: Unable to open Image file, FileNotFoundError: ", myargs.featuremap
+			print_flushed ("Error: Unable to open Image file, FileNotFoundError: ", myargs.featuremap)
 			return -1
 		if featuremap.mode not in ['RGB', 'RGBA']:
-			print "Error: Featuremap should be RGB or RGBA, exiting."
+			print_flushed ("Error: Featuremap should be RGB or RGBA, exiting.")
 			return -1
 		if featuremap.size != (mapx, mapy):
-			print 'Error: Incorrect %s featuremap dimensions of (%ix%i), image size should be exactly %ix%i for a spring map size of (%ix%i)' % (
-				myargs.featuremap, featuremap.size[0], featuremap.size[1], mapx, mapy, springmapx, springmapy)
+			print_flushed ('Error: Incorrect %s featuremap dimensions of (%ix%i), image size should be exactly %ix%i for a spring map size of (%ix%i)' % (
+				myargs.featuremap, featuremap.size[0], featuremap.size[1], mapx, mapy, springmapx, springmapy))
 			return -1
 		featuremap_pixels = featuremap.load()
 		for row in range(featuremap.size[1]):
@@ -446,43 +455,43 @@ def compileSMF(myargs):
 				if pixel[1] == 255:  # geovent
 					featureplacement.append(
 						{'name': 'GeoVent', 'x': 8.0 * col + 4, 'y': 0.0, 'z': 8.0 * row + 4, 'rot': 0.0, 'scale': 1.0})
-					print 'Placed GeoVent: %s' % (str(featureplacement[-1]))
+					print_flushed ('Placed GeoVent: %s' % (str(featureplacement[-1])))
 				elif pixel[1] < 216 and pixel[1] > 199:
 					featureplacement.append(
 						{'name': 'TreeType%i' % (pixel[1] - 200), 'x': 8.0 * col + 4, 'y': 0.0, 'z': 8.0 * row + 4,
 						 'rot': 0.0, 'scale': 1.0})
 				elif pixel[1] != 0:
-					print 'Undefined green pixel of value %i at %i x %i in %s. Not placing anything'
+					print_flushed ('Undefined green pixel of value %i at %i x %i in %s. Not placing anything')
 				if pixel[0] > 0:
 					try:
 						featureplacement.append(
 							{'name': featurelist[255 - pixel[0]][0], 'x': 8.0 * col + 4, 'y': 0.0, 'z': 8.0 * row + 4,
 							 'rot': 0.0, 'scale': 1.0})
-						#print 'Placed feature: ',str(featureplacement[-1])
+						#print_flushed ('Placed feature: ',str(featureplacement[-1]))
 					except IndexError:
-						print 'Unable to find a featurename in featurelist for red pixel value %i at %ix%i in featuremap!' % (
-						pixel[0], col, row)
-	print 'Placed a total of %i features out of %i feature types (17 of which are built-in), with the following distribution:' % (
-	len(featureplacement), len(featuretypes))
+						print_flushed ('Unable to find a featurename in featurelist for red pixel value %i at %ix%i in featuremap!' % (
+						pixel[0], col, row))
+	print_flushed ('Placed a total of %i features out of %i feature types (17 of which are built-in), with the following distribution:' % (
+	len(featureplacement), len(featuretypes)))
 	for featuretype in featuretypes:
 		cnt = 0
 		for feature in featureplacement:
 			if feature['name'] == featuretype:
 				cnt += 1
 		if cnt > 0:
-			print 'Placed %i %s' % (cnt, featuretype)
+			print_flushed ('Placed %i %s' % (cnt, featuretype))
 
 	if myargs.grassmap:
 		try:
 			grassmap = Image.open(myargs.grassmap)
-			print "Grassmap should be RGB, RBGA or 1 channel greyscale. It is:", grassmap.mode
+			print_flushed ("Grassmap should be RGB, RBGA or 1 channel greyscale. It is:", grassmap.mode)
 		except:  # If the file cannot be found.
-			print "Error: Unable to open Image file, FileNotFoundError: ", myargs.grassmap
+			print_flushed ("Error: Unable to open Image file, FileNotFoundError: ", myargs.grassmap)
 			return -1
 
 		if grassmap.size != (mapx / 4, mapy / 4):
-			print 'WARNING: Resizing grassmap nearest neighbour. Incorrect %s grassmap dimensions of (%ix%i), image size should be exactly %ix%i for a spring map size of (%ix%i)' % (
-				myargs.grassmap, grassmap.size[0], grassmap.size[1], mapx / 4, mapy / 4, springmapx, springmapy)
+			print_flushed ('WARNING: Resizing grassmap nearest neighbour. Incorrect %s grassmap dimensions of (%ix%i), image size should be exactly %ix%i for a spring map size of (%ix%i)' % (
+				myargs.grassmap, grassmap.size[0], grassmap.size[1], mapx / 4, mapy / 4, springmapx, springmapy))
 			grassmap = grassmap.resize((mapx / 4, mapy / 4), Image.NEAREST)
 		grassmap_pixels = grassmap.load()
 		for row in range(grassmap.size[1]):
@@ -494,7 +503,7 @@ def compileSMF(myargs):
 					if sum(grassmap_pixels[col, row]) != 0:
 						vegmap[(mapx / 4) * row + col] = min(254,int(sum(grassmap_pixels[col, row])/len(grassmap_pixels[col, row])))
 
-	print 'Total grass coverage of map is %f percent' % (100.0 * sum(vegmap) / float(mapx * mapy / 16))
+	print_flushed ('Total grass coverage of map is %f percent' % (100.0 * sum(vegmap) / float(mapx * mapy / 16)))
 	# actually load the texture image:
 
 
@@ -503,14 +512,14 @@ def compileSMF(myargs):
 		try:
 			geoventimg = Image.open(myargs.geoventfile)
 			geoventimg_pixels = geoventimg.load()
-			print 'You have specified a geoventfile named %s, size (%d x %d), which will be drawn onto the texture, centered on the location of the geovent. Except white (255,255,255) pixels, those wont be drawn.'%(myargs.geoventfile, geoventimg.size[0], geoventimg.size[1])
+			print_flushed ('You have specified a geoventfile named %s, size (%d x %d), which will be drawn onto the texture, centered on the location of the geovent. Except white (255,255,255) pixels, those wont be drawn.'%(myargs.geoventfile, geoventimg.size[0], geoventimg.size[1]))
 			if sum(geoventimg.size) > 1000:
-				print 'Warning: You have specified a very large %s geo vent file, are you sure this is what you desire?' % (
-				str(geoventimg.size))
+				print_flushed ('Warning: You have specified a very large %s geo vent file, are you sure this is what you desire?' % (
+				str(geoventimg.size)))
 			for feature in featureplacement:
 				if feature['name'].lower() == 'geovent':
 					geovent_pixel_y = 0
-					print 'Drawing a geothermal vent %s at X:%d ; Z:%d'%(geoventimg,feature['z'], feature['x'])
+					print_flushed ('Drawing a geothermal vent %s at X:%d ; Z:%d'%(geoventimg,feature['z'], feature['x']))
 					for row in range(int(feature['z'] - geoventimg.size[1] / 2), int(feature['z'] + geoventimg.size[1] / 2), 1):
 						geovent_pixel_x = 0
 						for col in range(int(feature['x'] - geoventimg.size[0] / 2), int(feature['x'] + geoventimg.size[0] / 2), 1):
@@ -519,21 +528,21 @@ def compileSMF(myargs):
 								if sum(geoventimg_pixels[geovent_pixel_x, geovent_pixel_y]) != 3 * 255:
 									intex_pixels[col, row] = geoventimg_pixels[geovent_pixel_x, geovent_pixel_y]
 							except IndexError:
-								print 'Warning: Failed to draw a geovent image pixel onto the main texture at %ix%i from geoventimg %s %dx%d' % (
-									col, row, myargs.geoventfile, geovent_pixel_x,geovent_pixel_y)
+								print_flushed ('Warning: Failed to draw a geovent image pixel onto the main texture at %ix%i from geoventimg %s %dx%d' % (
+									col, row, myargs.geoventfile, geovent_pixel_x,geovent_pixel_y))
 							geovent_pixel_x += 1
 						geovent_pixel_y += 1
 		except:  # If the file cannot be found.
-			print "Warning: Unable to open geoventfile, skipping drawing of geovents onto texture. FileNotFoundError:", myargs.geoventfile
+			print_flushed ("Warning: Unable to open geoventfile, skipping drawing of geovents onto texture. FileNotFoundError:", myargs.geoventfile)
 	typemap = [0] * (mapx / 2) * (mapy / 2)
 	if myargs.typemap:
-		print 'Loading typemap', myargs.typemap
+		print_flushed ('Loading typemap', myargs.typemap)
 		try:
 			typemap_img = Image.open(myargs.typemap)
 
 			if typemap_img.size != (mapx / 2, mapy / 2):
-				print 'Warning: Incorrect %s typemap dimensions of (%ix%i), image size should be exactly %ix%i for a spring map size of (%ix%i). Resizing typemap with nearest neighbour' % (
-					myargs.typemap, typemap_img.size[0], typemap_img.size[1], mapx / 2, mapy / 2, springmapx, springmapy)
+				print_flushed ('Warning: Incorrect %s typemap dimensions of (%ix%i), image size should be exactly %ix%i for a spring map size of (%ix%i). Resizing typemap with nearest neighbour' % (
+					myargs.typemap, typemap_img.size[0], typemap_img.size[1], mapx / 2, mapy / 2, springmapx, springmapy))
 				typemap_img = typemap_img.resize((mapx / 2, mapy / 2), Image.NEAREST)
 
 			typemap_img_pixel = typemap_img.load()
@@ -541,18 +550,18 @@ def compileSMF(myargs):
 				for col in range(typemap_img.size[0]):
 					typemap[(mapx / 2) * row + col] = typemap_img_pixel[col, row][0]
 		except:  # If the file cannot be found.
-			print "Warning: Unable to open typemap, skipping. FileNotFoundError:", myargs.typemap
+			print_flushed ("Warning: Unable to open typemap, skipping. FileNotFoundError:", myargs.typemap)
 
 	# make 1024x1024 tiles for nvdxt:
 	try:
-		print 'Creating temp directory for intermediate tiles'
+		print_flushed ('Creating temp directory for intermediate tiles')
 		if not os.path.exists('temp'):
 			os.makedirs('temp')
 	except:
-		print 'Failed to create temp directory! (already exists?)'
+		print_flushed ('Failed to create temp directory! (already exists?)')
 		pass
 	# todo: handle alpha in intex properly!
-	print 'Writing tiles',
+	print_flushed ('Writing tiles',)
 	extension = 'BMP'
 	if intex.mode == 'RGBA':
 		extension = 'TIFF'
@@ -561,28 +570,28 @@ def compileSMF(myargs):
 			tileindex = tiley * (springmapx / 2) + tilex
 			newtile = intex.crop((1024 * tilex, 1024 * tiley, 1024 * (tilex + 1), 1024 * (
 			tiley + 1)))  # The box is a 4-tuple defining the left, upper, right, and lower pixel coordinate.
-			print tileindex,
+			print_flushed (tileindex,)
 			newtile.save(os.path.join('temp', 'temp%i.%s' % (tileindex, extension)), format = extension)
-	print ''
+	print_flushed ('')
 
-	print 'Converting to dds',
+	print_flushed ('Converting to dds',)
 	if myargs.linux:
 		basecmd = 'convert -format dds -define dds:mipmaps=3 -define dds:compression=dxt1 temp/temp%i.%s temp/temp%i.dds'
-		print 'with the base command of:', basecmd
+		print_flushed ('with the base command of:', basecmd)
 		for tilex in range(springmapx / 2):
 			for tiley in range(springmapy / 2):
 				tileindex = tiley * (springmapx / 2) + tilex
 				cmd = basecmd % (tileindex, extension, tileindex)
 				os.system(cmd)
-				print tileindex,
-		print ''
+				print_flushed (tileindex,)
+		print_flushed ('')
 	else:
 		compressionmethod = 'dxt1a'
 		if intex.mode == 'RGBA':
 			compressionmethod = 'dxt1a'
 		cmd = 'nvdxt.exe -file temp\\temp*.%s -%s -outsamedir -nmips 4 %s' % (
 		extension, compressionmethod, '-Sinc -quality_highest' if myargs.nvdxt_options is None else myargs.nvdxt_options)
-		print 'with the command: ',cmd
+		print_flushed ('with the command: ',cmd)
 		os.system(cmd)
 
 	def ReadTile(xpos, ypos, sourcebuf):  # xpos and ypos are multiples of 32
@@ -602,12 +611,12 @@ def compileSMF(myargs):
 	minimapfilename = os.path.join('temp', 'minimap.bmp')
 	compressionmethod = 'dxt1a' #else we can get spurious alpha pixels in minimap
 
-	print 'Creating minimap', minimapfilename,'using the command:'
+	print_flushed ('Creating minimap' + minimapfilename + 'using the command:')
 	if myargs.minimap:
 		try:
 			minimapoverride = Image.open(myargs.minimap)
 			minimapoverride = minimapoverride.resize((1024,1024), Image.ANTIALIAS)
-			print "Opened custom minimap image", myargs.minimap, "in mode", minimapoverride.mode
+			print_flushed ("Opened custom minimap image "+ myargs.minimap+ " in mode "+ minimapoverride.mode)
 			if minimapoverride.mode == 'RGBA':
 				minimapfilename =  os.path.join('temp', 'minimap.TIFF')
 				minimapoverride.save(minimapfilename,format = 'TIFF')
@@ -615,7 +624,7 @@ def compileSMF(myargs):
 				minimapfilename =  os.path.join('temp', 'minimap.bmp')
 				minimapoverride.save(minimapfilename,format = 'BMP')
 		except:
-			print ("Failed to open minimap file name:", myargs.minimap)
+			print_flushed (("Failed to open minimap file name:", myargs.minimap))
 	else:
 		mini = intex.resize((1024, 1024), Image.ANTIALIAS)
 		if intex.mode == 'RGBA':
@@ -625,11 +634,11 @@ def compileSMF(myargs):
 			mini.save(minimapfilename, format = 'BMP')
 	if myargs.linux:
 		cmd = 'convert -format dds -define dds:mipmaps=8 -define dds:compression=dxt1 %s temp/minimap.dds' % ( 	minimapfilename)
-		print cmd
+		print_flushed (cmd)
 		os.system(cmd)
 	else:
 		cmd = 'nvdxt.exe -file %s -%s -nmips 9 -output temp/minimap.dds -Sinc -quality_highest' % (minimapfilename,compressionmethod)
-		print cmd
+		print_flushed (cmd)
 		os.system(cmd)
 
 	minimapdata = open(os.path.join('temp', 'minimap.dds'), 'rb').read()[128:]
@@ -637,7 +646,7 @@ def compileSMF(myargs):
 	intex = None
 	gc.collect()
 
-	print 'Building tiles'
+	print_flushed ('Building tiles')
 	tilehash = {}  # yes, we are gonna use the tiles as keys to perform rapid lossless compresssion :D
 	tileindices = {}
 
@@ -655,20 +664,20 @@ def compileSMF(myargs):
 						tilehash[tile] = len(tilehash)
 					tilepos = 32 * tilex + x + (32 * springmapx / 2) * (32 * tiley + y)
 					if tilepos in tileindices:
-						print 'something is very wrong here with tilepos, aborting compilation'
-						print x, y, tilex, tiley, tileindex
+						print_flushed ('something is very wrong here with tilepos, aborting compilation')
+						print_flushed (x, y, tilex, tiley, tileindex)
 						return -1
 					tileindices[tilepos] = tilehash[tile]
 			ddsfile.close()
 	# TODO: tilehash is larger than max tiles sometimes!
-	print 'Lossless compression of 32x32 tiles: %i tiles used of %i maximum' % (len(tilehash), 256 * springmapx * springmapy)
+	print_flushed ('Lossless compression of 32x32 tiles: %i tiles used of %i maximum' % (len(tilehash), 256 * springmapx * springmapy))
 
 	smtfilepath = myargs.outfile.replace('.smf', '.smt')
 	smtfilename = smtfilepath
 	smtbasepath, smtfilename = os.path.split(smtfilepath)
 	#if os.path.sep in smtfilepath:
 	#	smtfilename = smtfilepath.rpartition(os.path.sep)[2]
-	print 'Writing tile file ',smtfilepath,' linked as', smtfilename
+	print_flushed ('Writing tile file ' + smtfilepath + ' linked as ' + smtfilename)
 	tilefile = open(smtfilepath, 'wb')
 	tilefile.write(TileFileHeader_struct.pack('spring tilefile\0', 1, len(tilehash), 32, 1))
 	inversetiledict = {}
@@ -707,7 +716,7 @@ def compileSMF(myargs):
 										myargs.minheight, myargs.maxheight, heightmapptr, typemapptr, tilesptr,
 										minimapptr, metalmapptr, featureptr, numExtraHeaders))
 	smffile.write(ExtraHeader_struct.pack(12, 1, vegmapPtr))
-	print 'Size of vegetation (grass) map in pixels = ', len(vegmap)
+	print_flushed ('Size of vegetation (grass) map in pixels = ', len(vegmap))
 	for v in vegmap:
 		smffile.write(struct.pack('B', v))
 	for h in heights:
@@ -716,8 +725,8 @@ def compileSMF(myargs):
 		smffile.write(struct.pack('B', t))
 	smffile.write(minimapdata[:MINIMAP_SIZE])# dont even write more than needed, or else produced map will crash!
 	if verbose:
-		print 'Length of minimap data chunk = ', len(minimapdata), ', should be equal to', MINIMAP_SIZE
-		print 'Length of metalmap data chunk', len(metalmap)
+		print_flushed ('Length of minimap data chunk = ' + str(len(minimapdata)) + ', should be equal to ' + str(MINIMAP_SIZE))
+		print_flushed ('Length of metalmap data chunk', str(len(metalmap)))
 	for m in metalmap:
 		smffile.write(struct.pack('B', m))
 	smffile.write(MapTileHeader_struct.pack(numtilefiles, numtiles))
@@ -731,7 +740,7 @@ def compileSMF(myargs):
 		try:
 			featuretypeindex = featuretypes.index(f['name'])
 		except ValueError:
-			print 'WARNING: Failed to find feature name %s, data: %s in featuretype list %s, putting a TreeType0 there instead [report this error!]'%(f['name'], str(f),str(featuretypes))
+			print_flushed ('WARNING: Failed to find feature name %s, data: %s in featuretype list %s, putting a TreeType0 there instead [report this error!]'%(f['name'], str(f),str(featuretypes)))
 			smffile.write(MapFeatureStruct_struct.pack(featuretypes.index(f['TreeType0']), f['x'], f['y'], f['z'], f['rot'], f['scale']))
 		else:
 			smffile.write(MapFeatureStruct_struct.pack(featuretypes.index(f['name']), f['x'], f['y'], f['z'], f['rot'], f['scale']))
@@ -740,14 +749,14 @@ def compileSMF(myargs):
 	smffile.close()
 
 	if not myargs.dirty:
-		print 'Cleaning up temp dir...'
+		print_flushed ('Cleaning up temp dir...')
 		if myargs.linux:
 			os.system('rm -r ./temp')
 			pass
 		else:
 			os.system('del /Q temp')
 			pass
-	print 'All Done! You may now close the main window to exit the program :)'
+	print_flushed ('All Done! You may now close the main window to exit the program :)')
 	return 0
 
 
@@ -783,9 +792,9 @@ class SMFMapDecompiler:
 		self.numExtraHeaders = self.SMFHeader[16]  # ; ///< Numbers of extra headers following main header'''
 		if verbose:
 			attrs = vars(self)
-			print self.SMFHeader
+			print_flushed (self.SMFHeader)
 
-		print 'Writing minimap'
+		print_flushed ('Writing minimap')
 		miniddsheaderstr = ([68, 68, 83, 32, 124, 0, 0, 0, 7, 16, 10, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0,
 							 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 							 0, 0, 0, 0, 0, 0, 0,
@@ -812,14 +821,14 @@ class SMFMapDecompiler:
 
 		'''
 		-- The following are obsolete:
-		print 'Writing heightmap RAW (Remember, this is a %i by %i 16bit 1 channel IBM byte order raw!)' % (
+		print_flushed ('Writing heightmap RAW (Remember, this is a %i by %i 16bit 1 channel IBM byte order raw!)' % ()
 		(1 + self.mapx), (1 + self.mapy))
 		heightmap_file = open(os.path.join(self.savedir,self.basename + '_height.raw'), 'wb')
 		for pixel in self.heightmap:
 			heightmap_file.write(struct.pack('< H', pixel))
 		heightmap_file.close()
 
-		print 'Writing heightmap BMP'
+		print_flushed ('Writing heightmap BMP')
 		heightmap_img = Image.new('RGB', (1 + self.mapx, 1 + self.mapy), 'black')
 		heightmap_img_pixels = heightmap_img.load()
 		for x in range(heightmap_img.size[0]):
@@ -828,7 +837,7 @@ class SMFMapDecompiler:
 				heightmap_img_pixels[x, y] = (height, height, height)
 		heightmap_img.save(self.basename + '_height.bmp')
 		'''
-		print 'Writing heightmap PNG'
+		print_flushed ('Writing heightmap PNG')
 		heightmap_png_file = open(os.path.join(self.savedir,self.basename + '_height.png'), 'wb')
 		heightmap_png_writer = png.Writer(width=1 + self.mapx, height=1 + self.mapy, greyscale=True, bitdepth=16)
 		heightmap_per_rows = []
@@ -837,7 +846,7 @@ class SMFMapDecompiler:
 		heightmap_png_writer.write(heightmap_png_file, heightmap_per_rows)
 		heightmap_png_file.close()
 
-		print 'Writing MetalMap'
+		print_flushed ('Writing MetalMap')
 		self.metalmap = struct.unpack_from('< %iB' % ((self.mapx / 2) * (self.mapy / 2)), self.smffile,
 										   self.metalmapPtr)
 		metalmap_img = Image.new('RGB', (self.mapx / 2, self.mapy / 2), 'black')
@@ -848,7 +857,7 @@ class SMFMapDecompiler:
 				metalmap_img_pixels[x, y] = (metal, 0, 0)
 		metalmap_img.save(self.basename + '_metal.bmp')
 
-		print 'Writing typemap'
+		print_flushed ('Writing typemap')
 		self.typemap = struct.unpack_from('< %iB' % ((self.mapx / 2) * (self.mapy / 2)), self.smffile, self.typeMapPtr)
 		typemap_img = Image.new('RGB', (self.mapx / 2, self.mapy / 2), 'black')
 		typemap_img_pixels = typemap_img.load()
@@ -859,15 +868,15 @@ class SMFMapDecompiler:
 		typemap_img.save(self.basename + '_type.bmp')
 
 
-		print 'Writing grassmap'
+		print_flushed ('Writing grassmap')
 		# vegmapoffset = SMFHeader_struct.size+ExtraHeader_struct.size+4
 		for extraheader_index in range(self.numExtraHeaders):
 			extraheader = ExtraHeader_struct.unpack_from(self.smffile,
 														 extraheader_index * ExtraHeader_struct.size + SMFHeader_struct.size)
 			if verbose:
-				print 'Extraheader:', extraheader, '(size, type, extraoffset)'
+				print_flushed ('Extraheader:', extraheader, '(size, type, extraoffset)')
 			extraheader_size, extraheader_type, extraoffset = extraheader
-			# print 'ExtraHeader',extraheader
+			# print_flushed ('ExtraHeader',extraheader)
 			if extraheader_type == 1:  # grass
 				# self.grassmap=struct.unpack_from('< %iB'%((self.mapx/4)*(self.mapy/4)),self.smffile,ExtraHeader_struct.size+SMFHeader_struct.size+extraheader_size)
 				self.grassmap = struct.unpack_from('< %iB' % ((self.mapx / 4) * (self.mapy / 4)), self.smffile,
@@ -890,19 +899,19 @@ class SMFMapDecompiler:
 						grassmap_img_pixels[x, y] = (grass, grass, grass)
 
 				if grassValuemax == 0:
-					print "Map has no grass, but writing image anyway"
+					print_flushed ("Map has no grass, but writing image anyway")
 				elif grassValuemax == 1:
-					print "Map seems to have old style (binary) grass"
+					print_flushed ("Map seems to have old style (binary) grass")
 				else:
-					print "Map seems to have new style 0-254 awesome grass", grassValuemax
+					print_flushed ("Map seems to have new style 0-254 awesome grass", grassValuemax)
 				grassmap_img.save(self.basename + '_grass.bmp')
 
 		# MapFeatureHeader is followed by numFeatureType zero terminated strings indicating the names
 		# of the features in the map. Then follow numFeatures MapFeatureStructs.
 		self.mapfeaturesheader = MapFeatureHeader_struct.unpack_from(self.smffile, self.featurePtr)
 		if verbose:
-			print 'MapFeatureHeader=', self.mapfeaturesheader, '(numFeatureType, numFeatures)'
-			print 'MapTileHeader=', MapTileHeader_struct.unpack_from(self.smffile, self.tilesPtr), '(numTileFiles, numTiles)'
+			print_flushed ('MapFeatureHeader=', self.mapfeaturesheader, '(numFeatureType, numFeatures)')
+			print_flushed ('MapTileHeader=', MapTileHeader_struct.unpack_from(self.smffile, self.tilesPtr), '(numTileFiles, numTiles)')
 			self.somelulz = self.smffile[self.tilesPtr - 10:self.tilesPtr + 30]
 		self.numFeatureType, self.numFeatures = self.mapfeaturesheader
 		self.featurenames = []
@@ -911,7 +920,7 @@ class SMFMapDecompiler:
 			featurename = unpack_null_terminated_string(self.smffile, featureoffset)
 			self.featurenames.append(featurename)
 			featureoffset += len(featurename) + 1  # cause of null terminator
-			print featurename
+			print_flushed (featurename)
 			'''nextchar= 'N'
 			while nextchar != '\0':
 				nextchar=struct.unpack_from('c',self.smffile,len(featurename)+self.featurePtr+MapFeatureHeader_struct.size
@@ -922,19 +931,19 @@ class SMFMapDecompiler:
 				else:
 					featurename+=nextchar'''
 
-		print 'Features found in map definition', self.featurenames
+		print_flushed ('Features found in map definition', self.featurenames)
 		feature_offset = self.featurePtr + MapFeatureHeader_struct.size + sum(
 			[len(fname) + 1 for fname in self.featurenames])
 		self.features = []
 		for feature_index in range(self.numFeatures):
 			feat = MapFeatureStruct_struct.unpack_from(self.smffile,
 													   feature_offset + MapFeatureStruct_struct.size * feature_index)
-			# print feat
+			# print_flushed (feat)
 			self.features.append(
 				{'name': self.featurenames[feat[0]], 'x': feat[1], 'y': feat[2], 'z': feat[3], 'rotation': feat[4],
 				 'relativeSize': feat[5], })
-		# print self.features[-1]
-		print 'Writing feature placement file'
+		# print_flushed (self.features[-1])
+		print_flushed ('Writing feature placement file')
 		feature_file = open(os.path.join(self.savedir,self.basename + '_featureplacement.lua'), 'w')
 		for feature in self.features:
 			feature_file.write('{ name = \'%s\', x = %i, z = %i, rot = "%i" ,scale = %f },\n' % (
@@ -943,7 +952,7 @@ class SMFMapDecompiler:
 
 
 		if not skiptexture:
-			print 'loading tile files'
+			print_flushed ('loading tile files')
 			self.maptileheader = MapTileHeader_struct.unpack_from(self.smffile, self.tilesPtr)
 			self.numtilefiles, self.numtiles = self.maptileheader
 			self.tilefiles = []
@@ -956,36 +965,36 @@ class SMFMapDecompiler:
 				self.tilefiles.append(
 					#[tilefilename, numtilesinfile, open(filename.rpartition('\\')[0] + '\\' + tilefilename, 'rb').read()])
 					[tilefilename, numtilesinfile, open(os.path.join(self.savedir,tilefilename), 'rb').read()])
-				print tilefilename, 'has', numtilesinfile, 'tiles'
+				print_flushed (tilefilename, 'has', numtilesinfile, 'tiles')
 			self.tileindices = struct.unpack_from('< %ii' % ((self.mapx / 4) * (self.mapy / 4)), self.smffile, tileoffset)
 
 			self.tiles = []
 			for tilefile in self.tilefiles:
 				tileFileHeader = TileFileHeader_struct.unpack_from(tilefile[2], 0)
 				magic, version, numTiles, tileSize, compressionType = tileFileHeader
-				# print tilefile[0],': magic,version,numTiles,tileSize,compressionType',magic,version,numTiles,tileSize,compressionType
+				# print_flushed (tilefile[0],': magic,version,numTiles,tileSize,compressionType',magic,version,numTiles,tileSize,compressionType)
 				for i in range(numTiles):
 					self.tiles.append(struct.unpack_from('< %is' % (SMALL_TILE_SIZE), tilefile[2],
 														 TileFileHeader_struct.size + i * SMALL_TILE_SIZE)[0])
 
-			print 'Generating texture, this is very very slow (few minutes)'
+			print_flushed ('Generating texture, this is very very slow (few minutes)')
 			textureimage = Image.new('RGB', (self.mapx * 8, self.mapy * 8), 'black')
 			textureimagepixels = textureimage.load()
 			for ty in range(self.mapy / 4):
-				# print 'row',ty
+				# print_flushed ('row',ty)
 				for tx in range(self.mapx / 4):
 					currtile = self.tiles[self.tileindices[(self.mapx / 4) * ty + tx]]
-					# print 'Tile',(self.mapx/4)*ty+tx
+					# print_flushed ('Tile',(self.mapx/4)*ty+tx)
 					# one tile is 32x32, and pythonDecodeDXT1 will need one 'row' of data, assume this is 8*8 bytes
 					for rows in xrange(8):
-						# print "currtile",currtile
+						# print_flushed ("currtile",currtile)
 						dxdata = currtile[rows * 64:(rows + 1) * 64]
-						# print len(dxdata),dxdata
+						# print_flushed (len(dxdata),dxdata)
 						dxtrows = pythonDecodeDXT1(dxdata)  # decode in 8 block chunks
 						for x in xrange(tx * 32, (tx + 1) * 32):
 							for y in xrange(ty * 32 + 4 * rows, ty * 32 + 4 + 4 * rows):
-								# print rows, tx,ty,x,y
-								# print dxtrows
+								# print_flushed (rows, tx,ty,x,y)
+								# print_flushed (dxtrows)
 								oy = (ty * 32 + 4 * rows)
 								textureimagepixels[x, y] = (
 								ord(dxtrows[y - oy][3 * (x - tx * 32) + 0]), ord(dxtrows[y - oy][3 * (x - tx * 32) + 1]),
@@ -1006,8 +1015,8 @@ class SMFMapDecompiler:
 
 		infofile.close()
 
-		print 'Done, one final bit of important info: the maps maxheight is %i, while the minheight is %i' % (
-		self.maxHeight, self.minHeight)
+		print_flushed ('Done, one final bit of important info: the maps maxheight is %i, while the minheight is %i' % (
+		self.maxHeight, self.minHeight))
 
 
 if __name__ == "__main__":
@@ -1079,7 +1088,7 @@ if __name__ == "__main__":
 
 	def okbuttonhandler(self):
 		parsed_args = self.parse_args()
-		print (parsed_args)
+		print_flushed ((parsed_args))
 		if parsed_args.decompile != '' and parsed_args.decompile != None:
 			mymap = SMFMapDecompiler(parsed_args.decompile,skiptexture=parsed_args.skiptexture)
 		else:				
@@ -1090,7 +1099,7 @@ if __name__ == "__main__":
 			if haswinsound and compilesuccess == -1:
 				winsound.Beep(220,100)
 				winsound.Beep(164,100)
-	#print 'sys.argv:',sys.argv
+	#print_flushed ('sys.argv:',sys.argv)
 	if len(sys.argv) > 1: # if we got command line, then just run without gui
 		okbuttonhandler(parser)
 		exit(1)
@@ -1103,10 +1112,10 @@ if __name__ == "__main__":
 								  window_title="Spring Map Format (SMF) compiler and decompiler "+pymapconv_version)
 		a.show()
 		app.exec_()
-		print ("Ok" if a.result() == 1 else "Cancel")
+		print_flushed (("Ok" if a.result() == 1 else "Cancel"))
 		if a.result() == 1:  # Ok pressed
 			parsed_args = a.parse_args()
-			print (parsed_args)
+			print_flushed ((parsed_args))
 			if parsed_args.decompile != '' and parsed_args.decompile != None:
 				mymap = SMFMapDecompiler(parsed_args.decompile)
 			else:
