@@ -8,6 +8,8 @@ To use the tool, place it in your /maps folder and launch pymapconv.py or start 
 
 Miraculously self documenting.
 
+Read my guide on how to actually make maps for Spring: https://docs.google.com/document/d/1PL8U2bf-c5HuSVAihdldDTBA5fWKoeHKNb130YDdd-w/edit#
+
 ![gooey](https://raw.githubusercontent.com/Beherith/springrts_smf_compiler/master/pymapconv_gui.png)
 
 ## NEW FEATURES:
