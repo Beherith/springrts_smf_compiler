@@ -13,7 +13,7 @@ import os
 import math
 import gc
 
-pymapconv_version = "3.8"
+pymapconv_version = "3.9"
 
 def print_flushed(message, args=""):
 	print (message, args)
@@ -295,21 +295,31 @@ def compileSMF(myargs):
 					lerp_pixels[o, y] = lerp_pixels[4, y]
 					lerp_pixels[p - o, y] = lerp_pixels[p - 4, y]
 
-			#lerppng.save('lerptest.png')			
-			filter = Image.LANCZOS
-			if myargs.highresheightmapfilter == "bilinear":
-				filter = Image.BILINEAR
+			#lerppng.save('lerptest.png')
+			
+			# So what nearest neightbour is actually doing in this case, is its trying to sample the
+			# highres heightmap at exactly the texel positions on an 8x8 grid, to make it as close as possible
+			# with the texture and the heightmap. This is best used for stuff that has non-natural features
 			if myargs.highresheightmapfilter == "nearest":
-				filter = Image.NEAREST
-			
-			
-			loresheightmap = lerppng.resize((mapx+1, mapy+1),filter)
-			#loresheightmap.save('lerptestlanczos.png')
-			loresheightmap_pixels = loresheightmap.load()
-			print("lerp done")
-			for row in range(loresheightmap.size[1]):
-				for col in range(loresheightmap.size[0]):
-					heights.append(max(0,min(loresheightmap_pixels[col,row],65534)))
+				for y in range(4,mapy*8+8, 8):
+					for x in range(4,mapx*8+8,8):
+						heights.append(max(0,min(lerp_pixels[x,y], 65534)))
+				if len(heights) != (mapx + 1) * (mapy + 1):
+					print ("Warning, the size of the heightmap after nearest neighbour rescaling is wrong!")
+				
+			else:
+				filter = Image.LANCZOS
+				if myargs.highresheightmapfilter == "bilinear":
+					filter = Image.BILINEAR
+
+				
+				loresheightmap = lerppng.resize((mapx+1, mapy+1),filter)
+				#loresheightmap.save('lerptestlanczos.png')
+				loresheightmap_pixels = loresheightmap.load()
+				print("lerp done")
+				for row in range(loresheightmap.size[1]):
+					for col in range(loresheightmap.size[0]):
+						heights.append(max(0,min(loresheightmap_pixels[col,row],65534)))
 
 		elif pngheight[0] * pngheight[1] != (mapx + 1) * (mapy + 1):
 			print_flushed ('Error: Incorrect %s heightmap dimensions of (%ix%i), image size should be exactly %ix%i for a spring map size of (%ix%i)' % (
@@ -1072,7 +1082,7 @@ if __name__ == "__main__":
 	parser.add_argument('-v', '--nvdxt_options', help='|NVDXT| compression options ', default='-Sinc -quality_highest')
 	parser.add_argument('--highresheightmapfilter',
 						help='Which filter to use when downsampling highres heightmap: [lanczos, bilinear, nearest] ',
-						default="lanczos", type = str)
+						default="nearest", type = str)
 	parser.add_argument('-u', '--linux',
 						help='|LINUX| Check this if you are running linux and wish to use imagemagicks convert utility instead of nvdxt.exe',
 						default=False, action='store_true')
