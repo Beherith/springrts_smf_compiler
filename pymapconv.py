@@ -15,8 +15,8 @@ import gc
 
 pymapconv_version = "3.9"
 
-def print_flushed(message, args=""):
-	print (message, args)
+def print_flushed(*args):
+	print ' '.join(str(x) for x in args)
 	sys.stdout.flush()
 
 
