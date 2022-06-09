@@ -36,7 +36,7 @@ Added NVTT_DragAndDropConvertToDDSTools.7z, a set of tools for very easy convers
 
 ##  Windows usage:
 
-Dowload and use the precompiled version in pymapconv.exe in this repository
+Download the whole repository as a zip file, and launch the precompiled version in pymapconv.exe in this repository
 The windows build is 64 bit, thus allowing the compilation of maps up 64x64 size!
 Ensure that nvdxt.exe is next to it. 
 
