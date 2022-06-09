@@ -8,21 +8,24 @@ from PIL import Image
 import png
 import random
 import argparse
+import shutil
+import subprocess
+import time
 
 import os
 import math
 import gc
 
-pymapconv_version = "3.9"
+pymapconv_version = "4.0"
+
+start_time = time.time()
 
 def print_flushed(*args):
-	print ' '.join(str(x) for x in args)
+	global start_time
+	print "[%.2f] %s"%(time.time()- start_time,  ' '.join(str(x) for x in args) )
 	sys.stdout.flush()
 
-
 print_flushed ('Welcome to the SMF compiler/decompiler by Beherith (mysterme@gmail.com) ' + pymapconv_version)
-# print_flushed ("FUCK PYTHON")
-
 
 haswinsound = False
 try:
@@ -208,16 +211,56 @@ def unpack_null_terminated_string(data, offset):
 
 
 def compileSMF(myargs):
+	global start_time
+	start_time = time.time()
 	verbose = True
+	starttime = time.time()
+	print_flushed ('Compiling SMF with the following options: %s'%str( myargs))
 
-	print_flushed ('Compiling SMF with the following options:', myargs)
 	if myargs.outfile == '':
 		print_flushed ('Please specify a name for the map!')
 		return -1
 
-	if '.smf' not in myargs.outfile:
+	if not myargs.outfile.endswith('.smf'):
 		myargs.outfile += '.smf'
 		print_flushed ('Warning: The .smf extension was omitted from the output file name, output will be:', myargs.outfile)
+
+	print_flushed("The map will be output to: %s"%myargs.outfile)
+
+	numthreads = 4
+	try:
+		if myargs.linux:
+			numthreads = 1
+		numthreads = int(myargs.numthreads)
+	except:
+		print_flushed("Numthreads argument not specified or not an int: %s, using %d threads" % (str(myargs.numthreads, numthreads)))
+
+	#queue jobs for compressing mapnormals, dnts and specular
+	nvtt_jobs = None
+	if (not myargs.linux) and (myargs.mapnormals or myargs.specular or myargs.splatdistribution):
+		if os.path.exists("nvtt_export.exe") and os.path.exists("FreeImage.dll"):
+			cmds = []
+			if myargs.mapnormals:
+				cmds.append('nvtt_export.exe --output "%s.dds" --save-flip-y --mip-filter 0 --quality 3 --format bc1 "%s"'%
+							 ( myargs.mapnormals[0:-4], myargs.mapnormals))
+			if myargs.specular:
+				cmds.append('nvtt_export.exe --output "%s.dds" --save-flip-y --mip-filter 0 --quality 3 --format bc3 "%s"'%
+							 ( myargs.specular[0:-4], myargs.specular))
+			if myargs.splatdistribution:
+				cmds.append('nvtt_export.exe --output "%s.dds" --save-flip-y --mip-filter 0 --quality 3 --format bc3 "%s"'%
+							 ( myargs.splatdistribution[0:-4], myargs.splatdistribution))
+			cmds.append("echo nvtt_export jobs complete")
+			encoding = 'latin1'
+			nvtt_jobs = subprocess.Popen('cmd.exe', stdin=subprocess.PIPE,
+								 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			print_flushed("Submitting nvtt_export.exe jobs: %s"%(str(cmds)))
+			for cmd in cmds:
+				nvtt_jobs.stdin.write(cmd + "\n")
+			nvtt_jobs.stdin.close()
+			if numthreads == 1:
+				print_flushed(nvtt_jobs.stdout.read()) #because this is blocking!
+		else:
+			print_flushed("WARNING: unable to find nvtt_export.exe or FreeImage.dll for additional DDS exports, place these next to pymapconv.exe")
 
 	# open texture, get sizes
 	Image.MAX_IMAGE_PIXELS = 16000000000
@@ -249,6 +292,71 @@ def compileSMF(myargs):
 	else:
 		print_flushed ('MEGA WARNING: Texture image %s is neither RGB nor RGBA, but is %s this may cause unexpected issues downstream! I will try to continue, but no guarantees.' % (
 		myargs.intex, intex.mode))
+
+
+	try:
+		print_flushed ('Creating temp directory for intermediate tiles')
+		shutil.rmtree('./temp', ignore_errors=True)
+		if not os.path.exists('temp'):
+			try:
+				os.makedirs('temp')
+			except Exception as e:
+				print_flushed ('Exception while creating temporary directory: (%s)'%(str(e)))
+		if numthreads > 1 :
+			print_flushed("Using %d threads for compilation"%numthreads)
+			for i in range(numthreads):
+				threaddir = os.path.join('temp', 'thread%d'%i)
+				if not os.path.exists(threaddir):
+					os.makedirs(threaddir)
+				shutil.copyfile('nvdxt.exe', os.path.join(threaddir,'nvdxt.exe'))
+	except Exception as e:
+		print_flushed ('Exception while creating temporary directory: (%s)'%(str(e)))
+
+	minimapfilename = os.path.join('temp', 'minimap.bmp')
+	compressionmethod = 'dxt1a' #else we can get spurious alpha pixels in minimap
+	minimapthread = None
+	print_flushed ('Creating minimap %s'%minimapfilename)
+
+	minimapimage = None
+
+	if myargs.minimap:
+		try:
+			minimapimage = Image.open(myargs.minimap)
+			minimapimage = minimapimage.resize((1024,1024), Image.ANTIALIAS)
+			print_flushed ("Opened custom minimap image "+ myargs.minimap+ " in mode "+ minimapimage.mode)
+		except:
+			print_flushed ("Failed to open minimap file name: %s, fallback using main texture" % myargs.minimap)
+
+	if minimapimage == None:
+		minimapimage = intex.resize((1024, 1024), Image.ANTIALIAS)
+
+	if minimapimage.mode == 'RGBA':
+		minimapfilename = os.path.join('temp', 'minimap.TIFF')
+		minimapimage.save(minimapfilename, format='TIFF')
+	else:
+		minimapfilename = os.path.join('temp', 'minimap.bmp')
+		minimapimage.save(minimapfilename, format='BMP')
+
+	print_flushed("Saving minimap preview and thumbnail images as %s. + [JPG, PNG]"%(myargs.outfile[:-4]))
+	try:
+		minimapimage.save(myargs.outfile[:-4]+'.jpg', format = 'JPEG')
+		minimapimage = minimapimage.resize((128,128), Image.ANTIALIAS)
+		minimapimage.save(myargs.outfile[:-4]+'.png', format = 'PNG')
+	except Exception as e:
+		print_flushed("Failed to save minimap preview %s"%(str(e)))
+
+	if myargs.linux:
+		cmd = 'convert -format dds -define dds:mipmaps=8 -define dds:compression=dxt1 %s temp/minimap.dds' % ( 	minimapfilename)
+		print_flushed (cmd)
+		os.system(cmd)
+	else:
+		cmd = 'nvdxt.exe -file %s -%s -nmips 9 -output temp/minimap.dds -Sinc -quality_highest' % (minimapfilename,compressionmethod)
+		print_flushed (cmd)
+		if numthreads > 1:
+			minimapthread = subprocess.Popen(cmd.split(' '))
+		else:
+			os.system(cmd)
+
 	# open heightmap:
 	heights = []
 	if myargs.heightmap.lower().endswith('.raw') or  myargs.heightmap.lower().endswith('.r16'):
@@ -300,7 +408,7 @@ def compileSMF(myargs):
 			# So what nearest neightbour is actually doing in this case, is its trying to sample the
 			# highres heightmap at exactly the texel positions on an 8x8 grid, to make it as close as possible
 			# with the texture and the heightmap. This is best used for stuff that has non-natural features
-			if myargs.highresheightmapfilter == "nearest":
+			if myargs.highresheightmapfilter == "nearest" or myargs.highresheightmapfilter == None:
 				for y in range(4,mapy*8+8, 8):
 					for x in range(4,mapx*8+8,8):
 						heights.append(max(0,min(lerp_pixels[x,y], 65534)))
@@ -311,15 +419,13 @@ def compileSMF(myargs):
 				filter = Image.LANCZOS
 				if myargs.highresheightmapfilter == "bilinear":
 					filter = Image.BILINEAR
-
-				
 				loresheightmap = lerppng.resize((mapx+1, mapy+1),filter)
 				#loresheightmap.save('lerptestlanczos.png')
 				loresheightmap_pixels = loresheightmap.load()
-				print("lerp done")
 				for row in range(loresheightmap.size[1]):
 					for col in range(loresheightmap.size[0]):
 						heights.append(max(0,min(loresheightmap_pixels[col,row],65534)))
+			print_flushed("High res heightmap downscaling complete")
 
 		elif pngheight[0] * pngheight[1] != (mapx + 1) * (mapy + 1):
 			print_flushed ('Error: Incorrect %s heightmap dimensions of (%ix%i), image size should be exactly %ix%i for a spring map size of (%ix%i)' % (
@@ -563,15 +669,10 @@ def compileSMF(myargs):
 			print_flushed ("Warning: Unable to open typemap, skipping. FileNotFoundError:", myargs.typemap)
 
 	# make 1024x1024 tiles for nvdxt:
-	try:
-		print_flushed ('Creating temp directory for intermediate tiles')
-		if not os.path.exists('temp'):
-			os.makedirs('temp')
-	except:
-		print_flushed ('Failed to create temp directory! (already exists?)')
-		pass
+
+
 	# todo: handle alpha in intex properly!
-	print_flushed ('Writing tiles',)
+	print_flushed ('Writing %d tiles'%(springmapx * springmapy /4),)
 	extension = 'BMP'
 	if intex.mode == 'RGBA':
 		extension = 'TIFF'
@@ -580,8 +681,11 @@ def compileSMF(myargs):
 			tileindex = tiley * (springmapx / 2) + tilex
 			newtile = intex.crop((1024 * tilex, 1024 * tiley, 1024 * (tilex + 1), 1024 * (
 			tiley + 1)))  # The box is a 4-tuple defining the left, upper, right, and lower pixel coordinate.
-			print_flushed (tileindex,)
-			newtile.save(os.path.join('temp', 'temp%i.%s' % (tileindex, extension)), format = extension)
+
+			if numthreads > 1:
+				newtile.save(os.path.join('temp', "thread%i"%(tileindex % numthreads), 'temp%i.%s' % (tileindex, extension)), format = extension)
+			else:
+				newtile.save(os.path.join('temp', 'temp%i.%s' % (tileindex, extension)), format = extension)
 	print_flushed ('')
 
 	print_flushed ('Converting to dds',)
@@ -599,11 +703,28 @@ def compileSMF(myargs):
 		compressionmethod = 'dxt1a'
 		if intex.mode == 'RGBA':
 			compressionmethod = 'dxt1a'
-		cmd = 'nvdxt.exe -file temp\\temp*.%s -%s -outsamedir -nmips 4 %s' % (
-		extension, compressionmethod, '-Sinc -quality_highest' if myargs.nvdxt_options is None else myargs.nvdxt_options)
-		print_flushed ('with the command: ',cmd)
-		os.system(cmd)
-
+		if numthreads <= 1:
+				cmd = 'nvdxt.exe -file temp\\temp*.%s -%s -outsamedir -nmips 4 %s' % (
+					extension,
+					compressionmethod,
+					'-Sinc -quality_highest' if myargs.nvdxt_options is None else myargs.nvdxt_options)
+				print_flushed ('with the command: ',cmd)
+				os.system(cmd)
+		else:
+			threads = []
+			for i in range(numthreads):
+				cmd = '%snvdxt.exe -file temp\\%stemp*.%s -%s -outsamedir -nmips 4 %s' % (
+					'temp\\thread%d\\' % i,
+					'thread%d\\' % i,
+					extension,
+					compressionmethod,
+					'-Sinc -quality_highest' if myargs.nvdxt_options is None else 	myargs.nvdxt_options)
+				print_flushed('with the command: ', cmd)
+				threads.append(subprocess.Popen(cmd.split(' ')))
+				#os.system(cmd)
+			processing = True
+			while (any([thread.poll() is None for thread in threads])):
+				time.sleep(0.1)
 	def ReadTile(xpos, ypos, sourcebuf):  # xpos and ypos are multiples of 32
 		outtile = b''
 		sourceoffset = 0
@@ -617,40 +738,10 @@ def compileSMF(myargs):
 					outtile += sourcebuf[ptr:ptr + 8]
 			sourceoffset += 524288 / (1 << (i * 2))
 		return outtile
-	
-	minimapfilename = os.path.join('temp', 'minimap.bmp')
-	compressionmethod = 'dxt1a' #else we can get spurious alpha pixels in minimap
 
-	print_flushed ('Creating minimap' + minimapfilename + 'using the command:')
-	if myargs.minimap:
-		try:
-			minimapoverride = Image.open(myargs.minimap)
-			minimapoverride = minimapoverride.resize((1024,1024), Image.ANTIALIAS)
-			print_flushed ("Opened custom minimap image "+ myargs.minimap+ " in mode "+ minimapoverride.mode)
-			if minimapoverride.mode == 'RGBA':
-				minimapfilename =  os.path.join('temp', 'minimap.TIFF')
-				minimapoverride.save(minimapfilename,format = 'TIFF')
-			else:
-				minimapfilename =  os.path.join('temp', 'minimap.bmp')
-				minimapoverride.save(minimapfilename,format = 'BMP')
-		except:
-			print_flushed (("Failed to open minimap file name:", myargs.minimap))
-	else:
-		mini = intex.resize((1024, 1024), Image.ANTIALIAS)
-		if intex.mode == 'RGBA':
-			minimapfilename = os.path.join('temp', 'minimap.tiff')
-			mini.save(minimapfilename, format = 'TIFF')
-		else:
-			mini.save(minimapfilename, format = 'BMP')
-	if myargs.linux:
-		cmd = 'convert -format dds -define dds:mipmaps=8 -define dds:compression=dxt1 %s temp/minimap.dds' % ( 	minimapfilename)
-		print_flushed (cmd)
-		os.system(cmd)
-	else:
-		cmd = 'nvdxt.exe -file %s -%s -nmips 9 -output temp/minimap.dds -Sinc -quality_highest' % (minimapfilename,compressionmethod)
-		print_flushed (cmd)
-		os.system(cmd)
-
+	if minimapthread is not None: #if we used separate process
+		while(minimapthread.poll() is None):
+			time.sleep(0.1)
 	minimapdata = open(os.path.join('temp', 'minimap.dds'), 'rb').read()[128:]
 
 	intex = None
@@ -663,7 +754,12 @@ def compileSMF(myargs):
 	for tilex in range(springmapx / 2):
 		for tiley in range(springmapy / 2):
 			tileindex = tiley * (springmapx / 2) + tilex
-			ddsfile = open(os.path.join('temp', 'temp%i.dds' % (tileindex)), 'rb')
+
+			if numthreads > 1:
+				ddsfile = open(os.path.join('temp', 'thread%d'% (tileindex%numthreads),  'temp%i.dds' % (tileindex)), 'rb')
+			else:
+				ddsfile = open(os.path.join('temp', 'temp%i.dds' % (tileindex)), 'rb')
+				
 			ddsdata = ddsfile.read()[128:]
 			for x in range(32):
 				for y in range(32):
@@ -755,18 +851,18 @@ def compileSMF(myargs):
 		else:
 			smffile.write(MapFeatureStruct_struct.pack(featuretypes.index(f['name']), f['x'], f['y'], f['z'], f['rot'], f['scale']))
 
-
 	smffile.close()
 
 	if not myargs.dirty:
 		print_flushed ('Cleaning up temp dir...')
-		if myargs.linux:
-			os.system('rm -r ./temp')
-			pass
-		else:
-			os.system('del /Q temp')
-			pass
-	print_flushed ('All Done! You may now close the main window to exit the program :)')
+		shutil.rmtree('./temp', ignore_errors=True)
+
+	if nvtt_jobs is not None:
+		print_flushed("Output of additional NVTT jobs was:")
+		print_flushed(nvtt_jobs.stdout.read()) #yes this is blocking!
+		nvtt_jobs.stdout.close()
+
+	print_flushed ('All Done! You may now close the main window to exit the program :) Finished in %.2f seconds'%(time.time()-starttime))
 	return 0
 
 
@@ -1072,28 +1168,48 @@ if __name__ == "__main__":
 						help='|GRASS MAP| <grassmap.bmp> If specified, will override the grass specified in the featuremap. Expects an xsize/4 x ysize/4 sized bitmap, all values that are not 0 will result in grass',
 						type=str)
 	parser.add_argument('-y', '--typemap',
-						help='|TYPE MAP| <typemap.bmp> Type map to use, uses the red channel to decide terrain type. types are defined in the .smd, if this argument is skipped the entire map will TERRAINTYPE0',
+						help='|TYPE MAP| <typemap.bmp> Type map to use, uses the red channel to define terrain type [0-255]. types are defined in the .smd, if this argument is skipped the entire map will TERRAINTYPE0',
 						type=str)
 	parser.add_argument('-p', '--minimap',
 						help='|OVERRIDE MINIMAP| <minimap.bmp> If specified, will override generating a minimap from the texture file (intex) with the specified file. Must be 1024x1024 size.',
 						type=str)
 
-	# parser.add_argument('-s', '--justsmf', help = 'Just create smf file, dont make tile file (for quick recompilations)', default = 0, type=int)
-	parser.add_argument('-v', '--nvdxt_options', help='|NVDXT| compression options ', default='-Sinc -quality_highest')
-	parser.add_argument('--highresheightmapfilter',
-						help='Which filter to use when downsampling highres heightmap: [lanczos, bilinear, nearest] ',
-						default="nearest", type = str)
+	parser.add_argument('-l', '--mapnormals',
+						help='|MAPNORMALS| Compress and flip the map-wide normals to RGB .dds. Must be <= 16k * 16k sized (Windows only)',
+						type=str)
+
+	parser.add_argument('-z', '--specular',
+						help='|SPECULAR| Compress and flip the map-wide specular to RGBA .dds. Must be <= 16k * 16k sized (Windows only)',
+						type=str)
+
+	parser.add_argument('-w', '--splatdistribution',
+						help='|SPLATDISTRIBUTION| Compress and flip the splat distribution map to RGBA .dds. Must be <= 16k * 16k sized (Windows only)',
+						type=str)
+
+	parser.add_argument('-q', '--numthreads',
+						help='|MULTITHREAD| <numthreads> How many threads to use for main compression job (default 4, Windows only)',
+						default=4, type=int)
+
 	parser.add_argument('-u', '--linux',
 						help='|LINUX| Check this if you are running linux and wish to use imagemagicks convert utility instead of nvdxt.exe',
 						default=False, action='store_true')
+
+	# parser.add_argument('-s', '--justsmf', help = 'Just create smf file, dont make tile file (for quick recompilations)', default = 0, type=int)
+	parser.add_argument('-v', '--nvdxt_options', help='|NVDXT| compression options ', default='-Sinc -quality_highest')
+
+	parser.add_argument('--highresheightmapfilter',
+						help='Which filter to use when downsampling highres heightmap: [lanczos, bilinear, nearest] ',
+						default="nearest", type = str)
+
 	parser.add_argument('-c', '--dirty',
 						help='|Dirty| Keep temp directory after compilation',
 						default=False, action='store_true')
 	# parser.add_argument('-q', '--quick', help='|FAST| Quick compilation (lower texture quality)', action='store_true') //not implemented yet
+
 	parser.add_argument('-d', '--decompile', help='|DECOMPILE| Decompiles a map to everything you need to recompile it', type=str)
 	parser.add_argument('-s', '--skiptexture', help='|DECOMPILE| Skip generating the texture during decompilation', default = False, action = 'store_true')
 	parser.description = 'Spring RTS SMF map compiler/decompiler by Beherith (mysterme@gmail.com). You must select at least a texture and a heightmap for compilation'
-	parser.epilog = 'Remember, you can also use this from the command line!'
+	parser.epilog = 'Save your settings before exiting! Scroll down for more options!'
 
 
 	def okbuttonhandler(self):

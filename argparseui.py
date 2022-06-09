@@ -115,12 +115,12 @@ class ArgparseUi(QtGui.QDialog):
         self.OkButton.setToolTip("Start compilation/decompilation")
         self.CancelButton= self.addButton("Cancel (exit)")
 
-        self.DNTSButton = self.addButton("Convert image to DDS (DNTS)")
-        self.DNTSButton.setToolTip("Choose any image and have NVDXT convert it to a DXT5 DDS file for inclusion in maps. TGA files get flipped")
+        #self.DNTSButton = self.addButton("Convert image to DDS (DNTS)")
+        #self.DNTSButton.setToolTip("Choose any image and have NVDXT convert it to a DXT5 DDS file for inclusion in maps. TGA files get flipped")
         self.buttonsLayout.addSpacerItem(QtGui.QSpacerItem(20, 1, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum))
     
         self.OkButton.clicked.connect(self.onOk)
-        self.DNTSButton.clicked.connect(self.onDNTS)
+        #self.DNTSButton.clicked.connect(self.onDNTS)
         
         self.CancelButton.clicked.connect(self.onCancel)
         if self.use_save_load_button:
@@ -681,6 +681,7 @@ class ArgparseUi(QtGui.QDialog):
             print("DNTS Conversion:",nvdxtcommand)
             os.system(nvdxtcommand)    
             print("Done")
+
     def onCancel(self):
         """
         handle cancel button pressed
