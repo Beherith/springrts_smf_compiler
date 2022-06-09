@@ -14,6 +14,14 @@ Read my guide on how to actually make maps for Spring: https://docs.google.com/d
 
 ## NEW FEATURES:
 
+### Version 4.0
+- Multithreaded compilation is now super fast (windows only)
+- Add mapnormals, splatdistribution, and specular map dds compressors via nvtt_export.exe in a separate process (windows only)
+- Also generate minimap preview jpg, and thumbnail png for Chobby
+- Highresolution heightmap support, with multiple scaling options (nearest recommended)
+- Better print_flush (thanks grschafer!)
+- Linux tooling for dds drag-and-drop support (thanks The-Yak!)
+
 Added NVTT_DragAndDropConvertToDDSTools.7z, a set of tools for very easy conversion of map images of any size to .DDS format! Just drag and drop images onto the .bat files!
 ### Version 3.4
 - Minimap autosizing is supported now
