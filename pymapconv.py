@@ -22,7 +22,7 @@ start_time = time.time()
 
 def print_flushed(*args):
 	global start_time
-	print "[%.2f] %s"%(time.time()- start_time,  ' '.join(str(x) for x in args) )
+	print("[%.2f] %s"%(time.time()- start_time,  ' '.join(str(x) for x in args) ))
 	sys.stdout.flush()
 
 print_flushed ('Welcome to the SMF compiler/decompiler by Beherith (mysterme@gmail.com) ' + pymapconv_version)
@@ -92,7 +92,7 @@ def pythonDecodeDXT1(data):  # Python-only DXT1 decoder; this is slow!
 	blocks = len(data) / 8  # number of blocks in row
 	out = ['', '', '', '']  # row accumulators
 
-	for xb in xrange(blocks):
+	for xb in range(blocks):
 		# Decode next 8-byte block.
 		c0, c1, bits = struct.unpack('<HHI', data[xb * 8:xb * 8 + 8])
 		# print_flushed (c0,c1,bits)
@@ -108,8 +108,8 @@ def pythonDecodeDXT1(data):  # Python-only DXT1 decoder; this is slow!
 
 		# Decode this block into 4x4 pixels
 		# Accumulate the results onto our 4 row accumulators
-		for yo in xrange(4):
-			for xo in xrange(4):
+		for yo in range(4):
+			for xo in range(4):
 				# get next control op and generate a pixel
 
 				control = bits & 3
@@ -187,7 +187,7 @@ def pythonEncodeDXT1(
 			bestdiff = diff(pixel, c3)
 			best = 3
 		lookup.append(best)
-	lookup32 = 0L
+	lookup32 = 0
 	for i in range(len(data)):
 		lookup32 += lookup[i] * (2 ** (2 * i))
 	return outchunk + struct.pack('<I', lookup32)  # archer-esque 'woooooo'
@@ -787,7 +787,7 @@ def compileSMF(myargs):
 	tilefile = open(smtfilepath, 'wb')
 	tilefile.write(TileFileHeader_struct.pack('spring tilefile\0', 1, len(tilehash), 32, 1))
 	inversetiledict = {}
-	for tile, index in tilehash.iteritems():
+	for tile, index in tilehash.items():
 		inversetiledict[index] = tile
 	for i in range(len(inversetiledict)):
 		tilefile.write(inversetiledict[i])
@@ -1092,13 +1092,13 @@ class SMFMapDecompiler:
 					currtile = self.tiles[self.tileindices[(self.mapx / 4) * ty + tx]]
 					# print_flushed ('Tile',(self.mapx/4)*ty+tx)
 					# one tile is 32x32, and pythonDecodeDXT1 will need one 'row' of data, assume this is 8*8 bytes
-					for rows in xrange(8):
+					for rows in range(8):
 						# print_flushed ("currtile",currtile)
 						dxdata = currtile[rows * 64:(rows + 1) * 64]
 						# print_flushed (len(dxdata),dxdata)
 						dxtrows = pythonDecodeDXT1(dxdata)  # decode in 8 block chunks
-						for x in xrange(tx * 32, (tx + 1) * 32):
-							for y in xrange(ty * 32 + 4 * rows, ty * 32 + 4 + 4 * rows):
+						for x in range(tx * 32, (tx + 1) * 32):
+							for y in range(ty * 32 + 4 * rows, ty * 32 + 4 + 4 * rows):
 								# print_flushed (rows, tx,ty,x,y)
 								# print_flushed (dxtrows)
 								oy = (ty * 32 + 4 * rows)
