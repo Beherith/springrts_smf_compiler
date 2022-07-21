@@ -1230,7 +1230,7 @@ if __name__ == "__main__":
 		okbuttonhandler(parser)
 		exit(1)
 	else:
-		from PyQt4 import QtGui
+		from PyQt5 import QtWidgets as QtGui
 		import argparseui
 		app = QtGui.QApplication(sys.argv)
 		a = argparseui.ArgparseUi(parser, left_label_alignment=True, use_scrollbars=True, use_save_load_button=True,

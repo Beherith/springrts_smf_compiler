@@ -1,0 +1,4 @@
+# argparseui is modified, so it was vendored and included in this repo
+# pypng is vendored
+Pillow
+pyqt5
