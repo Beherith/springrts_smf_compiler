@@ -201,11 +201,13 @@ def unpack_null_terminated_string(data, offset):
 			print_flushed ("Failed to read a null terminated string from input file because the offset is past the end of the file! Last result:"+result)
 			#raise Exception("Failed to read a null terminated string from input file because the offset is past the end of the file! Last result:"+result)
 			return ""
+		# TODO: Can this be simplified to search forward for null byte and
+		# return slices? (Rather than doing a bunch of string concatenation)
 		nextchar = struct.unpack_from('c', data, offset + len(result))[0]
-		if nextchar == '\0':
+		if nextchar == b'\x00':
 			return result
 		else:
-			result += nextchar
+			result += nextchar.decode()
 		if len(result) > 256:
 			return result
 
@@ -375,7 +377,7 @@ def compileSMF(myargs):
 		pngheight = pngheight.read()
 		print_flushed ('Your heightmap is png, should be 16bit depth greyscale, no alpha, no paletteing, and is',pngheight[3])
 		if pngheight[3]['bitdepth'] != 16:
-			print_flushed ('Error: heightmap %s must be 16 bit depth, instead it is %i. Dont use .png for 8 bit heightmaps, use .bmp!'(myargs.heightmap, pngheight[3]['bitdepth']))
+			print_flushed ('Error: heightmap %s must be 16 bit depth, instead it is %i. Dont use .png for 8 bit heightmaps, use .bmp!' % (myargs.heightmap, pngheight[3]['bitdepth']))
 			return -1
 		if pngheight[3]['greyscale'] == False:
 			print_flushed ('Error: heightmap %s must be greyscale!' % (myargs.heightmap))
@@ -785,7 +787,7 @@ def compileSMF(myargs):
 	#	smtfilename = smtfilepath.rpartition(os.path.sep)[2]
 	print_flushed ('Writing tile file ' + smtfilepath + ' linked as ' + smtfilename)
 	tilefile = open(smtfilepath, 'wb')
-	tilefile.write(TileFileHeader_struct.pack('spring tilefile\0', 1, len(tilehash), 32, 1))
+	tilefile.write(TileFileHeader_struct.pack('spring tilefile\0'.encode(), 1, len(tilehash), 32, 1))
 	inversetiledict = {}
 	for tile, index in tilehash.items():
 		inversetiledict[index] = tile
@@ -796,7 +798,7 @@ def compileSMF(myargs):
 	smffile = open(myargs.outfile, 'wb')
 	# smffile.write(SMFHeader_struct.pack())
 	# SMFHeader_struct
-	magic = 'spring map file\0'
+	magic = 'spring map file\0'.encode()
 	version = 1
 	mapid = random.randint(0, 31 ** 2)
 	squaresize = 8
@@ -836,12 +838,12 @@ def compileSMF(myargs):
 	for m in metalmap:
 		smffile.write(struct.pack('B', m))
 	smffile.write(MapTileHeader_struct.pack(numtilefiles, numtiles))
-	smffile.write(struct.pack('< i %is' % (len(smtfilename + '\0')), numtiles, smtfilename + '\0'))
+	smffile.write(struct.pack('< i %is' % (len(smtfilename + '\0')), numtiles, (smtfilename + '\0').encode()))
 	for i in range(mapx * mapy / 16):
 		smffile.write(struct.pack('< i', tileindices[i]))
 	smffile.write(MapFeatureHeader_struct.pack(numfeaturetype, numfeatures))
 	for fname in featuretypes:
-		smffile.write(struct.pack('%is' % (len(fname + '\0')), fname + '\0'))
+		smffile.write(struct.pack('%is' % (len(fname + '\0')), (fname + '\0').encode()))
 	for f in featureplacement:
 		try:
 			featuretypeindex = featuretypes.index(f['name'])
