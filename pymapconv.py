@@ -257,7 +257,7 @@ def compileSMF(myargs):
 								 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 			print_flushed("Submitting nvtt_export.exe jobs: %s"%(str(cmds)))
 			for cmd in cmds:
-				nvtt_jobs.stdin.write(cmd + "\n")
+				nvtt_jobs.stdin.write((cmd + "\n").encode('utf-8'))
 			nvtt_jobs.stdin.close()
 			if numthreads == 1:
 				print_flushed(nvtt_jobs.stdout.read()) #because this is blocking!
