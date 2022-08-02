@@ -348,7 +348,7 @@ def compileSMF(myargs):
 		print_flushed("Failed to save minimap preview %s"%(str(e)))
 
 	if myargs.linux:
-		cmd = 'convert -format dds -define dds:mipmaps=8 -define dds:compression=dxt1 %s temp/minimap.dds' % ( 	minimapfilename)
+		cmd = 'CompressonatorCLI -fd DXT1 -RefineSteps 2 -miplevels 8 %s temp/minimap.dds' % ( 	minimapfilename)
 		print_flushed (cmd)
 		os.system(cmd)
 	else:
@@ -692,7 +692,7 @@ def compileSMF(myargs):
 
 	print_flushed ('Converting to dds',)
 	if myargs.linux:
-		basecmd = 'convert -format dds -define dds:mipmaps=3 -define dds:compression=dxt1 temp/temp%i.%s temp/temp%i.dds'
+		basecmd = 'CompressonatorCLI -fd DXT1 -RefineSteps 2 -miplevels 3 temp/temp%i.%s temp/temp%i.dds'
 		print_flushed ('with the base command of:', basecmd)
 		for tilex in range(springmapx // 2):
 			for tiley in range(springmapy // 2):
