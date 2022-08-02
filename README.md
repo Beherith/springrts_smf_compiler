@@ -14,6 +14,11 @@ Read my guide on how to actually make maps for Spring: https://docs.google.com/d
 
 ## NEW FEATURES:
 
+### Version 4.1
+ - Now uses python3, thanks to grshafer!
+ - Linux version now uses compressionator instead of imagemagick for speed and quality, thanks The-Yak!
+ - Executables are now built using github actions! Such magic!
+
 ### Version 4.0
 - Multithreaded compilation is now super fast (windows only)
 - Add mapnormals, splatdistribution, and specular map dds compressors via nvtt_export.exe in a separate process (windows only)
