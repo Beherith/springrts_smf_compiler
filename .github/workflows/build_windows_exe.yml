@@ -31,8 +31,6 @@ jobs:
         with:
           path: pymapconv.py
             
-        run: echo Hello, world!
-
       - uses: actions/upload-artifact@v2
         with:
           name: name-of-artifact
