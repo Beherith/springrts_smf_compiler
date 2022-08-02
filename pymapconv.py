@@ -1194,7 +1194,7 @@ if __name__ == "__main__":
 						default=4, type=int)
 
 	parser.add_argument('-u', '--linux',
-						help='|LINUX| Check this if you are running linux and wish to use imagemagicks convert utility instead of nvdxt.exe',
+						help='|LINUX| Check this if you are running linux and wish to use AMD Compressonator instead of nvdxt.exe',
 						default=False, action='store_true')
 
 	# parser.add_argument('-s', '--justsmf', help = 'Just create smf file, dont make tile file (for quick recompilations)', default = 0, type=int)
