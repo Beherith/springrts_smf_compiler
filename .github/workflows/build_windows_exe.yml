@@ -29,9 +29,10 @@ jobs:
       - name: Package Pymapconv for Windows
         uses: JackMcKew/pyinstaller-action-windows@main
         with:
-          path: pymapconv.py
+          path: .
+          spec: pymapconv.spec
             
       - uses: actions/upload-artifact@v2
         with:
-          name: name-of-artifact
+          name: pymapconv.exe
           path: dist/windows
