@@ -16,7 +16,7 @@ import os
 import math
 import gc
 
-pymapconv_version = "4.0"
+pymapconv_version = "4.1"
 
 start_time = time.time()
 
