@@ -770,6 +770,10 @@ class ArgparseUi(QtGui.QDialog):
         """
         what to do when the save button is clicked
         """
+        print ("Trying to save to", self.filename)
+        if type(self.filename) is tuple:
+           self.filename = self.filename[0]
+
         if not self.filename: 
           self.onSaveAs()
         else:

@@ -4,7 +4,6 @@
 import sys
 from sys import exit
 import struct
-from PIL import Image
 import png
 import random
 import argparse
@@ -16,7 +15,8 @@ import os
 import math
 import gc
 
-pymapconv_version = "4.1"
+from PIL import Image
+pymapconv_version = "4.2"
 
 start_time = time.time()
 
@@ -211,7 +211,129 @@ def unpack_null_terminated_string(data, offset):
 		if len(result) > 256:
 			return result
 
+class MetalSpot():
+	def __init__(self, x,z,amount):
+		self.pixels = []
+		self.cx = x
+		self.cz = z
+		self.total = amount
+		self.pixels.append((x,z,amount))
+	
+	def isneighbour(self, x,z):
+		for pixel in self.pixels:
+			if abs(pixel[0] - x) <=1 and abs(pixel[1] - z) <=1:
+				return True
+		return False
 
+				
+	def recalc(self):
+		self.cx = 0
+		self.cz = 0
+		self.total = 0
+		if len(self.pixels) == 0:
+			return
+		for pixel in self.pixels:
+			self.cx += pixel[0]
+			self.cz += pixel[1]
+			self.total += pixel[2]
+		self.cx = self.cx // len(self.pixels)
+		self.cz = self.cz // len(self.pixels) 
+	
+	def addpixel(self, x,z,amount):
+		self.pixels.append((x,z,amount))
+		self.recalc()
+		
+	def normalizeto(self, median):
+		if median > self.total:
+			for i,pixel in enumerate(self.pixels):
+				self.pixels[i] = (pixel[0], pixel[1], pixel[2])
+				
+	def sortpixels(self):
+		self.pixels.sort(key = lambda x:x[2], reverse = True)
+
+class MetalMap():
+	def __init__ (self, data, w,h):
+		self.data = data
+		self.data = []
+		for row in range(h):
+			self.data.append(data[row*w:(row+1)*w])
+		self.w = w
+		self.h = h
+		self.spots = []
+		
+	def printself(self):
+		for i,spot in enumerate(self.spots):
+			if spot.total > 0:
+				print (f'{i} x:{spot.cx:03} z:{spot.cz:03} total = {spot.total} numpixels = {len(spot.pixels)}')
+	
+	def calcspots(self, normalizemetal):
+		for x in range(self.w):
+			for z in range(self.h):
+				if self.data[x][z] >0:
+					
+					possiblespots = [spot for spot in self.spots if spot.isneighbour(x,z)]
+					if len(possiblespots) == 0:
+						self.spots.append(MetalSpot(x,z,self.data[x][z]))
+					elif len(possiblespots) == 1:
+						possiblespots[0].addpixel(x,z,self.data[x][z])
+					else:
+						print ("Merging spots")
+						possiblespots[0].addpixel(x,z,self.data[x][z])
+						for otherspot in possiblespots[1:]:
+							for otherpixel in otherspot.pixels:
+								possiblespots[0].addpixel(otherpixel[0], otherpixel[1],otherpixel[2])
+							otherspot.pixels = []
+							otherspot.recalc()
+		
+		print ("Pre normalization")
+		self.printself()
+		
+		for spot in self.spots:
+			spot.sortpixels()
+		#find the median spot total
+		totals = sorted([spot.total for spot in self.spots])
+		median = totals[int(len(self.spots)/2)]
+		print("Metal spot totals=", totals, 'median = ', median)
+		# changing all metal spots within args.normalizemetal 
+		for spot in self.spots:
+			if spot.total < median*(1.0 + normalizemetal/100.0) and spot.total > median*(1.0 - normalizemetal/100.0):
+				if median < spot.total: # we need to decrease its pixels
+					#ratio of how much to reduce each pixel by:
+					#ratio = median / spot.total
+					#for i,pixel in enumerate(spot.pixels):
+					#	spot.pixels[i] = (pixel[0],pixel[1], int(pixel[2] * ratio))
+
+					toremove = spot.total - median
+					for i,pixel in enumerate(spot.pixels):
+						if toremove <= 0:
+							break
+						removeable = int(pixel[2] * (1.0 - normalizemetal/100.0) )
+						removehere = min(removeable, toremove)
+						spot.pixels[i] = (pixel[0], pixel[1], pixel[2]- removehere)
+						toremove = toremove - removehere
+					
+				else: #greater, need to add to its pixels
+					toadd = median - spot.total
+					for i,pixel in enumerate(spot.pixels):
+						if toadd <=0: 
+							break
+						addable = 255 - pixel[2]
+						addhere = min(addable, toadd)
+						spot.pixels[i] = (pixel[0], pixel[1], pixel[2]+addhere)
+						toadd = toadd - addhere
+				spot.recalc()
+		#print a list of spots, values:
+		print ("Post normalization")
+		self.printself()
+		
+		#output it back
+		
+		newdata = [0]*(self.h*self.w) 
+		for spot in self.spots:
+			for pixel in spot.pixels:
+				newdata[pixel[0] + pixel[1]*self.w] = pixel[2]
+		return newdata
+				
 def compileSMF(myargs):
 	global start_time
 	start_time = time.time()
@@ -235,7 +357,7 @@ def compileSMF(myargs):
 			numthreads = 1
 		numthreads = int(myargs.numthreads)
 	except:
-		print_flushed("Numthreads argument not specified or not an int: %s, using %d threads" % (str(myargs.numthreads, numthreads)))
+		print_flushed("Numthreads argument not specified or not an int: %s, using %d threads" % (str(myargs.numthreads), numthreads))
 
 	#queue jobs for compressing mapnormals, dnts and specular
 	nvtt_jobs = None
@@ -500,6 +622,13 @@ def compileSMF(myargs):
 				else:
 					metalmap.append(0)
 				metalmap[-1] = max(0,min(255,metalmap[-1]))
+		# cluster the metal map into normalized size mexes
+		if myargs.normalizemetal is not None and myargs.normalizemetal > 0.01:
+			metalSpots = MetalMap(metalmap, metalimage.size[0],metalimage.size[1])
+			metalmap = metalSpots.calcspots(myargs.normalizemetal)
+			
+		metalspots = {} # a metalspot is a dict of a list of pixels
+		
 	else:
 		metalmap = [0] * (mapy * mapx // 4)
 
@@ -1143,6 +1272,9 @@ if __name__ == "__main__":
 	parser.add_argument('-m', '--metalmap',
 						help='|METAL MAP| <metalmap.bmp> Metal map to use, red channel is amount of metal. Resized to xsize / 2 by ysize / 2.',
 						type=str)
+	parser.add_argument('--normalizemetal',
+						help='|NORMALIZE METAL MAP| <percent spread> (optional) If the metal map has noisy spots, specify how many percent of deviation from the median metal map value will be corrected to the median. E.g. 15.0 (%) will correct 1.7 and 2.3 to 2.0',
+						default=0.0, type=float)
 	parser.add_argument('-x', '--maxheight',
 						help='|MAXIMUM HEIGHT| <max height> (required) What altitude in spring the max(0xff for 8 bit images or 0xffff for 16bit images) level of the height map represents',
 						default=100.0, type=float)
