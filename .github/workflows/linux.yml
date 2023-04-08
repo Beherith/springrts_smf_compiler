@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Make staging directory for build
+        run: mkdir stage
+
+      - name: Package tools for Linux
+        run: cp -r tools/linux stage/tools
+
+      - name: Package build
+        run: |
+          sh build/linux/build.sh
+          cp -r bin/pymapconv/* stage
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: linux-build
+          path: stage

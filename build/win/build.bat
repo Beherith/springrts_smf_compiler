@@ -1,2 +1,1 @@
-python setup.py build
-python setup.py bdist_msi
+python3 -m PyInstaller --one-file --distpath=..\\..\\bin .spec
