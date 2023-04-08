@@ -27,7 +27,7 @@ jobs:
 
       - name: Package build
         run: |
-          cd .build/win
+          cd ./build/win
           ./build.bat
           cd ../..
           cp -r ./bin/pymapconv/* stage
