@@ -1,4 +1,4 @@
-name: CI
+name: CI Linux
 
 on:
   push:
@@ -20,16 +20,19 @@ jobs:
       - name: Package tools for Linux
         run: cp -r tools/linux stage/tools
 
-      - name: Package build
+      - name: Install build dependencies
         run: |
           cd build
           pip install -r ./requirements-dev.txt
-          cd linux
-          sh build.sh
-          cd ../..
-          cp -r bin/pymapconv/* stage
+
+        - name: Package build
+          run: |
+            cd build/linux
+            sh build.sh
+            cd ../..
+            cp -r bin/pymapconv/* stage
 
       - uses: actions/upload-artifact@v2
         with:
           name: linux-build
-          path: stage
+          path: stage/

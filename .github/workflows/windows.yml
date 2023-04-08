@@ -1,4 +1,4 @@
-name: CI
+name: CI Windows
 
 on:
   push:
@@ -14,15 +14,25 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Prepare Output Directory
-        run: mkdir -p bin
+      - name: Make staging directory for build
+        run: mkdir stage
 
-      - name: Package Tools for Windows
-        run: cp -r tools/win bin/tools
+      - name: Package tools for Windows
+        run: cp -r tools/windows stage/tools
 
-      -
+      - name: Install build dependencies
+        run: |
+          cd build
+          pip install -r ./requirements-dev.txt
+
+        - name: Package build
+          run: |
+            cd build/win
+            ./build.bat
+            cd ../..
+            cp -r bin/pymapconv/* stage
 
       - uses: actions/upload-artifact@v2
         with:
           name: windows-build
-          path: dist/win
+          path: stage/
