@@ -22,7 +22,11 @@ jobs:
 
       - name: Package build
         run: |
-          sh build/linux/build.sh
+          cd build
+          pip install -r ./requirements-dev.txt
+          cd linux
+          sh build.sh
+          cd ../..
           cp -r bin/pymapconv/* stage
 
       - uses: actions/upload-artifact@v2
