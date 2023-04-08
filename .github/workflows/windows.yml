@@ -18,7 +18,7 @@ jobs:
         run: mkdir stage
 
       - name: Package tools for Windows
-        run: cp -r ./tools/windows ./stage/tools
+        run: cp -r ./tools/win ./stage/tools
 
       - name: Install build dependencies
         run: |
