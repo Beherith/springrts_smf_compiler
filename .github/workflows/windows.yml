@@ -25,12 +25,12 @@ jobs:
           cd build
           pip install -r ./requirements-dev.txt
 
-        - name: Package build
-          run: |
-            cd build/win
-            ./build.bat
-            cd ../..
-            cp -r bin/pymapconv/* stage
+      - name: Package build
+        run: |
+          cd build/win
+          ./build.bat
+          cd ../..
+          cp -r bin/pymapconv/* stage
 
       - uses: actions/upload-artifact@v2
         with:
