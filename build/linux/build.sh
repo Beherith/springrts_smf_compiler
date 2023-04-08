@@ -1,7 +1,7 @@
 #!/usr/bin/sh
 
-DIR="$( dirname -- "${BASH_SOURCE[0]}"; )";
-DIR="$( realpath -e -- "$DIR"; )";
+SRC=$(readlink -f ${BASH_SOURCE[0]})
+DIR=$(dirname ${SRC})
 
 if [ -z "$1" ]; then
     distpath="$DIR/../../bin"
