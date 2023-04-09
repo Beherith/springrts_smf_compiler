@@ -25,6 +25,9 @@ jobs:
           cd build
           pip install -r ./requirements-dev.txt
 
+      - name: Test deps
+        run: python -m png
+      
       - name: Package build
         run: |
           cd build/linux

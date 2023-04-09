@@ -11,7 +11,7 @@ a = Analysis(
         ('../../LICENSE', '.'),
         ('../../README.md', '.')
     ],
-    hiddenimports=['png'],
+    hiddenimports=list(stdlib_list.stdlib_list()),
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
