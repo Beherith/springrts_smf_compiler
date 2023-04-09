@@ -1,5 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+import stdlib_list
+
 block_cipher = None
 
 a = Analysis(
