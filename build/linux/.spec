@@ -1,7 +1,4 @@
 # -*- mode: python ; coding: utf-8 -*-
-
-import stdlib_list
-
 block_cipher = None
 
 a = Analysis(
@@ -13,7 +10,7 @@ a = Analysis(
         ('../../LICENSE', '.'),
         ('../../README.md', '.')
     ],
-    hiddenimports=list(stdlib_list.stdlib_list()),
+    hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
