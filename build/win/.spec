@@ -10,6 +10,7 @@ a = Analysis(
         ('..\\..\\LICENSE', '.'),
         ('..\\..\\README.md', '.')
     ],
+    icon='.\icon.ico',
     binaries=[('nvdxt.exe', '.')],
     hiddenimports=[],
     hookspath=[],

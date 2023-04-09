@@ -24,13 +24,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get install qtbase5-dev qt5-qmake
+          sudo apt-get install qt5-default
           pip install -r src/requirements.txt
 
       - name: Install build dependencies
-        run: |
-          choco install qt5-default
-          pip install -r build/requirements-dev.txt
+        run: pip install -r build/requirements-dev.txt
 
       - name: Make staging directory for build
         run: mkdir stage

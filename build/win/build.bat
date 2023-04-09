@@ -1,1 +1,1 @@
-python3 -m PyInstaller --icon=.\icon.ico --distpath=..\\..\\bin .\.spec
+python3 -m PyInstaller --distpath=..\\..\\bin .\.spec
