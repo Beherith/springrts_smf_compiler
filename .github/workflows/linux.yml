@@ -28,12 +28,12 @@ jobs:
           pip install -r src/requirements.txt
 
       - name: Install build dependencies
-        run: pip install -r build/requirements-dev.txt
+        run: |
+          choco install qt5-default
+          pip install -r build/requirements-dev.txt
 
       - name: Make staging directory for build
         run: mkdir stage
-
-      - run: python -m png
 
       - name: Package tools for Linux
         run: cp -r tools/linux stage/tools
