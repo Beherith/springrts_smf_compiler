@@ -1,8 +1,12 @@
 *.pyc
-build/
-dist/
 
 \.idea/
+
+# CI/CD Staging area
+stage
+
+# Build output
+bin
 
 temp/
 venv/

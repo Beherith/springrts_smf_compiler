@@ -1,0 +1,1 @@
+python3 -m PyInstaller --distpath=..\\..\\bin .\.spec
