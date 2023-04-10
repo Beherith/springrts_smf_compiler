@@ -43,7 +43,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: linux-build
-          path: pymanconv.tar.gz
+          path: pymanconv.linux.tar.gz
 
   build_windows:
     runs-on: windows-latest
