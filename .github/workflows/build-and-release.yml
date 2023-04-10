@@ -1,4 +1,4 @@
-name: CI Linux
+name: CI/CD
 
 on:
   push:
@@ -38,12 +38,12 @@ jobs:
           sh build.sh
           cd ../..
           cp -r bin/pymapconv/* stage
-          tar -cvf pymanconv.linux.tar.gz stage
+          tar -cvf pymapconv.linux.tar.gz stage
 
       - uses: actions/upload-artifact@v2
         with:
           name: linux-build
-          path: pymanconv.linux.tar.gz
+          path: pymapconv.linux.tar.gz
 
   build_windows:
     runs-on: windows-latest
@@ -89,7 +89,7 @@ jobs:
       - build_linux
 #      - build_windows
 
-    if: github.ref == 'refs/heads/master'
+   # if: github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v3
 
@@ -121,7 +121,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: pymanconv.linux.tar.gz
+          asset_path: pymapconv.linux.tar.gz
           asset_name: pymapconv.linux.tar.gz
           asset_content_type: application/gzip
 
