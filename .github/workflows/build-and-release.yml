@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
@@ -51,7 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
@@ -97,7 +97,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Determine Version
-        run: echo "version=$(python ./src/version.py)" >> $GITHUB_OUTPUT
+        run: echo "package_version=$(python ./src/version.py)" >> $GITHUB_ENV
         id: version
 
       - name: Download Linux Artifact
@@ -116,8 +116,8 @@ jobs:
         with:
           draft: ${{ github.ref != 'refs/heads/master' }}
           prerelease: false
-          body: PyMapConv v${{ steps.version.outputs.version }}
-          name: v${{ steps.version.outputs.version }}
+          body: PyMapConv v${{ env.package_version }}
+          name: v${{ env.package_version }}
           tag: ${{ github.ref }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -138,6 +138,6 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: pymapconv.windows-amd64.zip
+          asset_path: windows-build.zip
           asset_name: pymapconv.windows-amd64.zip
           asset_content_type: application/zip
