@@ -16,7 +16,7 @@ import math
 import gc
 
 from PIL import Image
-pymapconv_version = "4.2"
+from version import __VERSION__
 
 start_time = time.time()
 
@@ -24,8 +24,6 @@ def print_flushed(*args):
 	global start_time
 	print("[%.2f] %s"%(time.time()- start_time,  ' '.join(str(x) for x in args) ))
 	sys.stdout.flush()
-
-print_flushed ('Welcome to the SMF compiler/decompiler by Beherith (mysterme@gmail.com) ' + pymapconv_version)
 
 haswinsound = False
 try:
@@ -1343,6 +1341,7 @@ if __name__ == "__main__":
 
 	parser.add_argument('-d', '--decompile', help='|DECOMPILE| Decompiles a map to everything you need to recompile it', type=str)
 	parser.add_argument('-s', '--skiptexture', help='|DECOMPILE| Skip generating the texture during decompilation', default = False, action = 'store_true')
+	parser.add_argument('-v,', '--version', action='version', version=__VERSION__)
 	parser.description = 'Spring RTS SMF map compiler/decompiler by Beherith (mysterme@gmail.com). You must select at least a texture and a heightmap for compilation'
 	parser.epilog = 'Save your settings before exiting! Scroll down for more options!'
 
@@ -1370,7 +1369,7 @@ if __name__ == "__main__":
 		app = QtGui.QApplication(sys.argv)
 		a = argparseui.ArgparseUi(parser, left_label_alignment=True, use_scrollbars=True, use_save_load_button=True,
 								  ok_button_handler=okbuttonhandler,
-								  window_title="Spring Map Format (SMF) compiler and decompiler "+pymapconv_version)
+								  window_title="Spring Map Format (SMF) compiler and decompiler "+__VERSION__)
 		a.show()
 		app.exec_()
 		print_flushed (("Ok" if a.result() == 1 else "Cancel"))
