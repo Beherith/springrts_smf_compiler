@@ -101,13 +101,11 @@ jobs:
         id: version
 
       - name: Download Linux Artifact
-        id: download_windows
         uses: actions/download-artifact@v3
         with:
           name: linux-build
 
       - name: Download Windows Artifact
-        id: download_windows
         uses: actions/download-artifact@v3
         with:
           name: windows-build
@@ -119,7 +117,7 @@ jobs:
           draft: ${{ github.ref != 'refs/heads/master' }}
           prerelease: false
           body: PyMapConv v${{ steps.version.outputs.version }}
-          name: ${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
           tag: ${{ github.ref }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -134,12 +132,12 @@ jobs:
           asset_name: pymapconv.linux-amd64.tar.gz
           asset_content_type: application/gzip
 
-#      - name: Upload Windows Artifact
-#        uses: actions/upload-release-asset@v1
-#        env:
-#          GITHUB_TOKEN: ${{ github.token }}
-#        with:
-#          upload_url: ${{ steps.create_release.outputs.upload_url }}
-#          asset_path: pymapconv.windows-amd64.zip
-#          asset_name: pymapconv.windows-amd64.zip
-#          asset_content_type: application/zip
+      - name: Upload Windows Artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: pymapconv.windows-amd64.zip
+          asset_name: pymapconv.windows-amd64.zip
+          asset_content_type: application/zip
