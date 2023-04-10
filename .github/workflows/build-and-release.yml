@@ -38,9 +38,9 @@ jobs:
           sh build.sh
           cd ../..
           cp -r bin/pymapconv/* stage
-          tar -czvf pymapconv.linux-amd64.tar.gz stage
+          tar -czvf pymapconv.linux-amd64.tar.gz stage/*
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: linux-build
           path: pymapconv.linux-amd64.tar.gz
@@ -78,18 +78,21 @@ jobs:
           cd ../..
           cp -r bin/pymapconv/* stage
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: windows-build
           path: stage/
 
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     needs:
       - build_linux
-#      - build_windows
+      - build_windows
 
-   # if: github.ref == 'refs/heads/master'
+    #if: github.ref == 'refs/heads/master'
+
     steps:
       - uses: actions/checkout@v3
 
@@ -103,21 +106,21 @@ jobs:
         with:
           name: linux-build
 
-#      - name: Download Windows Artifact
-#        id: download_windows
-#        uses: actions/download-artifact@v3
-#        with:
-#          name: linux-build
+      - name: Download Windows Artifact
+        id: download_windows
+        uses: actions/download-artifact@v3
+        with:
+          name: windows-build
 
       - name: Create Release
-        uses: actions/create-release@v1
+        uses: ncipollo/release-action@v1
         id: create_release
         with:
-          draft: false
+          draft: ${{ github.ref != 'refs/heads/master' }}
           prerelease: false
           body: PyMapConv v${{ steps.version.outputs.version }}
-          release_name: ${{ steps.version.outputs.version }}
-          tag_name: ${{ github.ref }}
+          name: ${{ steps.version.outputs.version }}
+          tag: ${{ github.ref }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
