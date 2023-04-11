@@ -31,6 +31,7 @@ jobs:
             echo "Tag for this version already exists! Bump the version in src/version.py"
             exit 1
           fi
+          exit 0
 
       - name: Write Output
         id: write_output
