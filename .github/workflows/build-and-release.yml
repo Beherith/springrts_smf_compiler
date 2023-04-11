@@ -150,12 +150,11 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          name: v${{ env.package_version }}
-          draft: ${{ github.ref != 'refs/heads/master' }}
+          name: v${{ needs.validate_release_version.outputs.tag_name }}
           tag_name: ${{ needs.validate_release_version.outputs.tag_name }}
           prerelease: false
           body: PyMapConv v${{ needs.validate_release_version.outputs.version }}
           files: |
-            pymapconv.v${{ needs.validate_release_version.outputs.tag_name }}.linux-amd64.tar.gz
-            pymapconv.v${{ needs.validate_release_version.outputs.tag_name }}.windows-amd64.zip
+            pymapconv.v${{ needs.validate_release_version.outputs.version }}.linux-amd64.tar.gz
+            pymapconv.v${{ needs.validate_release_version.outputs.version }}.windows-amd64.zip
 
