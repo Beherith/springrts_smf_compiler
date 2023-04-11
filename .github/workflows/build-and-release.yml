@@ -23,21 +23,21 @@ jobs:
           echo "package_version=$package_version" >> $GITHUB_ENV
           echo "tag_name=v$package_version" >> $GITHUB_ENV
 
-      - name: Check for Release Tag
+      - uses: mukunku/tag-exists-action@v1.2.0
         id: check_tag
-        run: |
-          git ls-remote --tags origin | grep "${{ env.tag_name }}"
-          tag=$(git ls-remote --tags origin | grep "${{ env.tag_name }}")
-          if [ -n "$tag" ]; then
-            echo "Tag for this version already exists! Bump the version in src/version.py"
-            exit 1
-          fi
+        with:
+          tag: ${{ env.tag_name }}
 
       - name: Write Output
         id: write_output
         run: |
-          echo "tag_name=${{ env.tag_name }}" >> $GITHUB_OUTPUT
-          echo "version=${{ env.package_version }}" >> $GITHUB_OUTPUT
+          if [ ${{ steps.check_tag.outputs.exists }} ]; then
+           echo "Tag for this release already exists! Bump version in src/version.py"
+           exit 1
+          else
+            echo "tag_name=${{ env.tag_name }}" >> $GITHUB_OUTPUT
+            echo "version=${{ env.package_version }}" >> $GITHUB_OUTPUT
+          fi
 
   build_linux:
     runs-on: ubuntu-latest
