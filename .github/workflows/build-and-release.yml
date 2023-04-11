@@ -9,6 +9,7 @@ on:
 
 jobs:
   validate_release_version:
+    runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.check_tag.outputs.version }}
       tag_name: ${{ steps.check_tag.outputs.tag_name }}
