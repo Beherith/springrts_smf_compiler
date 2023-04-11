@@ -70,12 +70,12 @@ jobs:
           sh build.sh
           cd ../..
           cp -r bin/pymapconv/* stage
-          tar -czvf "pymapconv.v${{ needs.validate_release_version.version }}.linux-amd64.tar.gz" -C stage .
+          tar -czvf "pymapconv.v${{ needs.validate_release_version.outputs.version }}.linux-amd64.tar.gz" -C stage .
 
       - uses: actions/upload-artifact@v3
         with:
           name: linux-build
-          path: "pymapconv.v${{ needs.validate_release_version.version }}linux-amd64.tar.gz"
+          path: pymapconv.v${{ needs.validate_release_version.outputs.version }}linux-amd64.tar.gz
 
   build_windows:
     runs-on: windows-latest
@@ -110,12 +110,12 @@ jobs:
           ./build.bat
           cd ../..
           cp -r bin/pymapconv/* stage
-          Compress-Archive -Path stage/* -DestinationPath pymapconv.v${{ needs.validate_release_version.version }}.windows-amd64.zip
+          Compress-Archive -Path stage/* -DestinationPath pymapconv.v${{ needs.validate_release_version.outputs.version }}.windows-amd64.zip
 
       - uses: actions/upload-artifact@v3
         with:
           name: windows-build
-          path: pymapconv.v${{ needs.validate_release_version.version }}.windows-amd64.zip
+          path: pymapconv.v${{ needs.validate_release_version.outputs.version }}.windows-amd64.zip
 
   release:
     runs-on: ubuntu-latest
@@ -145,9 +145,9 @@ jobs:
         with:
           name: v${{ env.package_version }}
           draft: ${{ github.ref != 'refs/heads/master' }}
-          tag_name: ${{ needs.validate_release_version.tag_name }}
+          tag_name: ${{ needs.validate_release_version.outputs.tag_name }}
           prerelease: false
-          body: PyMapConv v${{ env.package_version }}
+          body: PyMapConv v${{ needs.validate_release_version.outputs.version }}
           files: |
             pymapconv.linux-amd64.tar.gz
             pymapconv.windows-amd64.zip
