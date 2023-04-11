@@ -24,8 +24,8 @@ jobs:
       - name: Check for Release Tag
         id: check_tag
         run: |
-          tag_name = "v${{ env.package_version }}"
-          tag = $(git ls-remote --tags origin | grep $tag_name)
+          tag_name="v${{ env.package_version }}"
+          tag=$(git ls-remote --tags origin | grep $tag_name)
           if [ -n "$tag" ]; then
             echo "Tag for this version already exists! Bump the version in src/version.py" 1>&2;
             exit 1
