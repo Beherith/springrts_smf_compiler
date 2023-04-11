@@ -1,0 +1,123 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  build_linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get install qtbase5-dev qt5-qmake
+          pip install -r src/requirements.txt
+
+      - name: Install build dependencies
+        run: pip install -r build/requirements-dev.txt
+
+      - name: Make staging directory for build
+        run: mkdir stage
+
+      - name: Package tools for Linux
+        run: cp -r tools/linux stage/tools
+
+      - name: Package build
+        run: |
+          cd build/linux
+          sh build.sh
+          cd ../..
+          cp -r bin/pymapconv/* stage
+          tar -czvf pymapconv.linux-amd64.tar.gz -C stage
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: linux-build
+          path: pymapconv.linux-amd64.tar.gz
+
+  build_windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          choco install qt5-default
+          pip install -r src/requirements.txt
+
+      - name: Install build dependencies
+        run: |
+          pip install -r build/requirements-dev.txt
+
+      - name: Make staging directory for build
+        run: mkdir stage
+
+      - name: Package tools for Windows
+        run: cp -r tools/win stage/tools
+
+      - name: Package build
+        run: |
+          cd ./build/win
+          ./build.bat
+          cd ../..
+          cp -r bin/pymapconv/* stage
+          Compress-Archive -Path stage/* -DestinationPath pymapconv.windows-amd64.zip
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: windows-build
+          path: pymapconv.windows-amd64.zip
+
+  release:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    permissions:
+      contents: write
+    needs:
+      - build_linux
+      - build_windows
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Determine Version
+        run: echo "package_version=$(python ./src/version.py)" >> $GITHUB_ENV
+        id: version
+
+      - name: Download Linux Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: linux-build
+
+      - name: Download Windows Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: windows-build
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: v${{ env.package_version }}
+          draft: ${{ github.ref != 'refs/heads/master' }}
+          prerelease: false
+          body: PyMapConv v${{ env.package_version }}
+          files: |
+            pymapconv.linux-amd64.tar.gz
+            pymapconv.windows-amd64.zip
+
