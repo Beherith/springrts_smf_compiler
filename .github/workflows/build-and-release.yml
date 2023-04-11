@@ -8,8 +8,34 @@ on:
   workflow_dispatch:
 
 jobs:
+  validate_release_version:
+    outputs:
+      version: ${{ steps.check_tag.outputs.version }}
+      tag_name: ${{ steps.check_tag.outputs.tag_name }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Determine Version
+        id: get_version
+        run: |
+          echo "package_version=$(python ./src/version.py)" >> $GITHUB_ENV
+
+      - name: Check for Release Tag
+        id: check_tag
+        run: |
+          tag_name = "v${{ env.package_version }}"
+          tag = $(git ls-remote --tags origin | grep $tag_name)
+          if [ -n "$tag" ]; then
+            echo "Tag for this version already exists! Bump the version in src/version.py" 1>&2;
+            exit 1
+          else
+            echo "tag_name=$tag_name" >> $GITHUB_OUTPUT
+            echo "version=${{ env.package_version }}" >> $GITHUB_OUTPUT
+          fi
+
   build_linux:
     runs-on: ubuntu-latest
+    needs: validate_release_version
     steps:
       - uses: actions/checkout@v3
 
@@ -38,15 +64,16 @@ jobs:
           sh build.sh
           cd ../..
           cp -r bin/pymapconv/* stage
-          tar -czvf pymapconv.linux-amd64.tar.gz -C stage .
+          tar -czvf "pymapconv.v${{ needs.validate_release_version.version }}.linux-amd64.tar.gz" -C stage .
 
       - uses: actions/upload-artifact@v3
         with:
           name: linux-build
-          path: pymapconv.linux-amd64.tar.gz
+          path: "pymapconv.v${{ needs.validate_release_version.version }}linux-amd64.tar.gz"
 
   build_windows:
     runs-on: windows-latest
+    needs: validate_release_version
 
     steps:
       - uses: actions/checkout@v3
@@ -77,28 +104,25 @@ jobs:
           ./build.bat
           cd ../..
           cp -r bin/pymapconv/* stage
-          Compress-Archive -Path stage/* -DestinationPath pymapconv.windows-amd64.zip
+          Compress-Archive -Path stage/* -DestinationPath pymapconv.v${{ needs.validate_release_version.version }}.windows-amd64.zip
 
       - uses: actions/upload-artifact@v3
         with:
           name: windows-build
-          path: pymapconv.windows-amd64.zip
+          path: pymapconv.v${{ needs.validate_release_version.version }}.windows-amd64.zip
 
   release:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+#    if: github.ref == 'refs/heads/master'
     permissions:
       contents: write
     needs:
       - build_linux
       - build_windows
+      - validate_release_version
 
     steps:
       - uses: actions/checkout@v3
-
-      - name: Determine Version
-        run: echo "package_version=$(python ./src/version.py)" >> $GITHUB_ENV
-        id: version
 
       - name: Download Linux Artifact
         uses: actions/download-artifact@v3
@@ -110,11 +134,17 @@ jobs:
         with:
           name: windows-build
 
+      - name: Make Release Tag
+        run: |
+          git tag ${{ needs.validate_release_version.tag_name }}
+          git push origin ${{ needs.validate_release_version.tag_name }}
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           name: v${{ env.package_version }}
           draft: ${{ github.ref != 'refs/heads/master' }}
+          tag_name: ${{ needs.validate_release_version.tag_name }}
           prerelease: false
           body: PyMapConv v${{ env.package_version }}
           files: |
