@@ -140,11 +140,6 @@ jobs:
         with:
           name: windows-build
 
-      - name: Make Release Tag
-        run: |
-          git tag ${{ needs.validate_release_version.tag_name }}
-          git push origin ${{ needs.validate_release_version.tag_name }}
-
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
