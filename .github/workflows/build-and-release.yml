@@ -140,6 +140,12 @@ jobs:
         with:
           name: windows-build
 
+      - uses: rickstaa/action-create-tag@v1
+        with:
+          tag: ${{ needs.validate_release_version.outputs.tag_name }}
+          tag_exists_error: true
+          message: Release ${{ needs.validate_release_version.outputs.tag_name }}
+
       - name: Create Release Tag
         uses: laputansoft/github-tag-action@v4.6
         with:
