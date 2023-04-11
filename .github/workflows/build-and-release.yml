@@ -30,7 +30,7 @@ jobs:
             echo "Tag for this version already exists! Bump the version in src/version.py" 1>&2;
             exit 1
           else
-            echo "tag_name=$tag_name" >> $GITHUB_OUTPUT
+            echo "tag_name=$(tag_name)" >> $GITHUB_OUTPUT
             echo "version=${{ env.package_version }}" >> $GITHUB_OUTPUT
           fi
 
