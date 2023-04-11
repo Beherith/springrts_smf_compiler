@@ -19,7 +19,8 @@ jobs:
       - name: Determine Version
         id: get_version
         run: |
-          echo "package_version=$(python ./src/version.py)" >> $GITHUB_ENV
+          package_version=$(python ./src/version.py)
+          echo "package_version=$package_version" >> $GITHUB_ENV
           echo "tag_name=v$package_version" >> $GITHUB_ENV
 
       - name: Check for Release Tag
