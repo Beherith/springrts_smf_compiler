@@ -38,7 +38,7 @@ jobs:
           sh build.sh
           cd ../..
           cp -r bin/pymapconv/* stage
-          tar -czvf pymapconv.linux-amd64.tar.gz -C stage
+          tar -czvf pymapconv.linux-amd64.tar.gz -C stage .
 
       - uses: actions/upload-artifact@v3
         with:
