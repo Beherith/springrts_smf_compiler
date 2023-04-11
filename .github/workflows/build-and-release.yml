@@ -31,7 +31,7 @@ jobs:
       - name: Write Output
         id: write_output
         run: |
-          if [ ${{ steps.check_tag.outputs.exists }} ]; then
+          if [ ${{ steps.check_tag.outputs.exists }} = 'true' ]; then
            echo "Tag for this release already exists! Bump version in src/version.py"
            exit 1
           else
