@@ -150,7 +150,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          name: v${{ needs.validate_release_version.outputs.tag_name }}
+          name: v${{ needs.validate_release_version.outputs.version }}
           tag_name: ${{ needs.validate_release_version.outputs.tag_name }}
           prerelease: false
           body: PyMapConv v${{ needs.validate_release_version.outputs.version }}
