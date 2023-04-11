@@ -26,11 +26,15 @@ jobs:
       - name: Check for Release Tag
         id: check_tag
         run: |
+          echo "1"
           tag=$(git ls-remote --tags origin | grep "${{ env.tag_name }}")
+          echo "2"
           if [ -n "$tag" ]; then
+            echo "3"
             echo "Tag for this version already exists! Bump the version in src/version.py"
             exit 1
           fi
+          echo "4"
           exit 0
 
       - name: Write Output
