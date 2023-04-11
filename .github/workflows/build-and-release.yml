@@ -11,8 +11,8 @@ jobs:
   validate_release_version:
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.check_tag.outputs.version }}
-      tag_name: ${{ steps.check_tag.outputs.tag_name }}
+      version: ${{ steps.write_output.outputs.version }}
+      tag_name: ${{ steps.write_output.outputs.tag_name }}
     steps:
       - uses: actions/checkout@v3
 
@@ -20,17 +20,21 @@ jobs:
         id: get_version
         run: |
           echo "package_version=$(python ./src/version.py)" >> $GITHUB_ENV
+          echo "tag_name=v$package_version" >> $GITHUB_ENV
 
       - name: Check for Release Tag
         id: check_tag
         run: |
-          tag_name="v${{ env.package_version }}"
-          tag=$(git ls-remote --tags origin | grep $tag_name)
+          tag=$(git ls-remote --tags origin | grep "${{ env.tag_name }}")
           if [ -n "$tag" ]; then
             echo "Tag for this version already exists! Bump the version in src/version.py"
             exit 1
           fi
-          echo "tag_name=$tag_name" >> $GITHUB_OUTPUT
+
+      - name: Write Output
+        id: write_output
+        run: |
+          echo "tag_name=${{ env.tag_name }}" >> $GITHUB_OUTPUT
           echo "version=${{ env.package_version }}" >> $GITHUB_OUTPUT
 
   build_linux:
