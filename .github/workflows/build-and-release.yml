@@ -119,7 +119,7 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
-#    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master'
     permissions:
       contents: write
     needs:
@@ -140,6 +140,12 @@ jobs:
         with:
           name: windows-build
 
+      - name: Create Release Tag
+        uses: laputansoft/github-tag-action@v4.6
+        with:
+          github_token: ${{ env.github-token }}
+          tag: ${{ needs.validate_release_version.outputs.tag_name }}
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
@@ -149,6 +155,6 @@ jobs:
           prerelease: false
           body: PyMapConv v${{ needs.validate_release_version.outputs.version }}
           files: |
-            pymapconv.linux-amd64.tar.gz
-            pymapconv.windows-amd64.zip
+            pymapconv.v${{ needs.validate_release_version.outputs.tag_name }}.linux-amd64.tar.gz
+            pymapconv.v${{ needs.validate_release_version.outputs.tag_name }}.windows-amd64.zip
 
