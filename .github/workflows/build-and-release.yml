@@ -107,7 +107,7 @@ jobs:
       - name: Package build
         run: |
           cd ./build/win
-          ./build.bat
+          powershell ./build.ps1
           cd ../..
           cp -r bin/pymapconv.exe stage
           Compress-Archive -Path stage/* -DestinationPath pymapconv.v${{ needs.validate_release_version.outputs.version }}.windows-amd64.zip
