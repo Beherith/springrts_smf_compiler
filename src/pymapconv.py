@@ -514,7 +514,7 @@ def compileSMF(myargs):
 			lerppng.paste(highresheightmap, (4,4))
 
 			lerp_pixels = lerppng.load()
-
+			
 			for o in range(4):
 				p = mapy*8+8-1
 				for x in range(mapx*8+8):
@@ -525,19 +525,32 @@ def compileSMF(myargs):
 				for y in range(mapy * 8 + 8):
 					lerp_pixels[o, y] = lerp_pixels[4, y]
 					lerp_pixels[p - o, y] = lerp_pixels[p - 4, y]
-
+					
 			#lerppng.save('lerptest.png')
-			
+					
+			if myargs.highresheightmapfilter == "median":
+				for row in range(mapy+1):
+					for col in range(mapx+1):
+						#gather all corner pixels, if possible
+						corners = []
+						kernelsize = 2
+						for x in range(col*8 +4 - kernelsize,col*8 +4 + kernelsize):
+							for y in range(row*8 +4 - kernelsize, row*8 +4 + kernelsize):
+								corners.append(lerp_pixels[x,y])
+						#maybe median filter is useable here, for now?
+						corners = sorted(corners)
+						heights.append(corners[len(corners)//2])
+
 			# So what nearest neightbour is actually doing in this case, is its trying to sample the
 			# highres heightmap at exactly the texel positions on an 8x8 grid, to make it as close as possible
 			# with the texture and the heightmap. This is best used for stuff that has non-natural features
-			if myargs.highresheightmapfilter == "nearest" or myargs.highresheightmapfilter == None:
+			elif myargs.highresheightmapfilter == "nearest" or myargs.highresheightmapfilter == None:
 				for y in range(4,mapy*8+8, 8):
 					for x in range(4,mapx*8+8,8):
 						heights.append(max(0,min(lerp_pixels[x,y], 65534)))
 				if len(heights) != (mapx + 1) * (mapy + 1):
 					print ("Warning, the size of the heightmap after nearest neighbour rescaling is wrong!")
-				
+
 			else:
 				filter = Image.LANCZOS
 				if myargs.highresheightmapfilter == "bilinear":
@@ -1332,7 +1345,7 @@ if __name__ == "__main__":
 	parser.add_argument('-v', '--nvdxt_options', help='|NVDXT| compression options ', default='-Sinc -quality_highest')
 
 	parser.add_argument('--highresheightmapfilter',
-						help='Which filter to use when downsampling highres heightmap: [lanczos, bilinear, nearest] ',
+						help='Which filter to use when downsampling highres heightmap: [lanczos, bilinear, nearest, median] ',
 						default="nearest", type = str)
 
 	parser.add_argument('-c', '--dirty',
