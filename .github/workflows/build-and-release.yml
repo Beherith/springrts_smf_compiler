@@ -64,6 +64,12 @@ jobs:
       - name: Package tools for Linux
         run: cp -r tools/linux stage/tools
 
+      - name: Package support files
+        run: |
+          cp -r resources stage
+          cp LICENSE stage
+          cp README.md stage
+
       - name: Package build
         run: |
           cd build/linux
@@ -88,7 +94,6 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-#choco install qt5-default
       - name: Install dependencies
         run: |
           pip install -r src/requirements.txt
@@ -102,6 +107,13 @@ jobs:
 
       - name: Package tools for Windows
         run: cp -r tools/win stage/tools
+
+      - name: Package support files
+        run: |
+          cp -r resources stage
+          cp LICENSE stage
+          cp README.md stage
+          cp build/win/nvdxt.exe stage
 
       - name: Package build
         run: |

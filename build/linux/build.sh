@@ -11,7 +11,5 @@ python3 -m PyInstaller \
     --noconfirm --onefile --log-level=WARN --noupx \
     --paths '../../src' \
     --distpath $distpath \
-    --add-data '../../resources/*:resources' \
-    --add-data '../../LICENSE:.' \
     --noconfirm \
     '../../src/pymapconv.py'
