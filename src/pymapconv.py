@@ -10,6 +10,7 @@ import argparse
 import shutil
 import subprocess
 import time
+import platform
 
 import os
 import math
@@ -1281,7 +1282,7 @@ if __name__ == "__main__":
 						default=-50.0, type=float)
 	parser.add_argument('-g', '--geoventfile',
 						help='|GEOVENT DECAL| <geovent.bmp> The decal for geothermal vents; appears on the compiled map at each vent. Custom geovent decals should use all white as transparent, clear this if you do not wish to have geovents drawn.',
-						default='geovent.bmp', type=str)
+						default='./resources/geovent.bmp', type=str)
 	# parser.add_argument('-c', '--compress', help =  '<compression> How much we should try to compress the texture map. Values between [0;1] lower values make higher quality, larger files. [NOT IMPLEMENTED YET]',  default = 0.0, type = float )
 
 	# parser.add_argument('-i', '--invert', help = 'Flip the height map image upside-down on reading.', default = False, action='store_true' )
@@ -1325,7 +1326,7 @@ if __name__ == "__main__":
 
 	parser.add_argument('-u', '--linux',
 						help='|LINUX| Check this if you are running linux and wish to use AMD Compressonator instead of nvdxt.exe',
-						default=False, action='store_true')
+						default=(platform.system() == 'Linux'), action='store_true')
 
 	# parser.add_argument('-s', '--justsmf', help = 'Just create smf file, dont make tile file (for quick recompilations)', default = 0, type=int)
 	parser.add_argument('-v', '--nvdxt_options', help='|NVDXT| compression options ', default='-Sinc -quality_highest')

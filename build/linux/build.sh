@@ -7,4 +7,9 @@ else
     distpath=$1
 fi
 
-python3 -m PyInstaller --noconfirm --distpath=$distpath .spec
+python3 -m PyInstaller \
+    --noconfirm --onefile --log-level=WARN --noupx \
+    --paths '../../src' \
+    --distpath $distpath \
+    --noconfirm \
+    '../../src/pymapconv.py'
