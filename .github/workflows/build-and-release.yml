@@ -69,7 +69,7 @@ jobs:
           cd build/linux
           sh build.sh
           cd ../..
-          cp -r bin/pymapconv/* stage
+          cp -r bin/pymapconv stage
           tar -czvf "pymapconv.v${{ needs.validate_release_version.outputs.version }}.linux-amd64.tar.gz" -C stage .
 
       - uses: actions/upload-artifact@v3
@@ -109,7 +109,7 @@ jobs:
           cd ./build/win
           ./build.bat
           cd ../..
-          cp -r bin/pymapconv/* stage
+          cp -r bin/pymapconv.exe stage
           Compress-Archive -Path stage/* -DestinationPath pymapconv.v${{ needs.validate_release_version.outputs.version }}.windows-amd64.zip
 
       - uses: actions/upload-artifact@v3
