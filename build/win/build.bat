@@ -7,4 +7,4 @@ python3 -m PyInstaller ^
     --add-data '..\..\LICENSE:.' ^
     --add-binary 'nvdxt.exe:.' ^
     --noconfirm ^
-    '..\\..\\src\\pymapconv.py'
+    '..\..\src\pymapconv.py'
