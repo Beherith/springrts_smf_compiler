@@ -3,7 +3,7 @@ python3 -m PyInstaller ^
     --icon icon.ico ^
     --paths '..\..\src' ^
     --distpath ..\..\bin ^
-    --add-data '..\..\resources/*:resources' ^
+    --add-data '..\..\resources\*:resources' ^
     --add-data '..\..\LICENSE:.' ^
     --add-binary 'nvdxt.exe:.' ^
     --noconfirm ^
