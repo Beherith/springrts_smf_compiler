@@ -91,7 +91,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          choco install qt5-default
+#          choco install qt5-default
           pip install -r src/requirements.txt
 
       - name: Install build dependencies

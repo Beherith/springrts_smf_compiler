@@ -1,3 +1,4 @@
+ls
 python3 -m PyInstaller `
     --noconfirm --onefile --log-level=WARN --noupx `
     --icon icon.ico `
