@@ -541,6 +541,40 @@ def compileSMF(myargs):
 						corners = sorted(corners)
 						heights.append(corners[len(corners)//2])
 
+			if myargs.highresheightmapfilter == "histogram":
+				for row in range(mapy+1):
+					for col in range(mapx+1):
+						#gather all corner pixels, if possible
+						histogram = {}
+						values = []
+						kernelsize = 4
+
+						for x in range(col*8 +4 - kernelsize,col*8 +4 + kernelsize):
+							for y in range(row*8 +4 - kernelsize, row*8 +4 + kernelsize):
+								value = lerp_pixels[x,y]
+								values.append(value)
+								if value not in histogram:
+									histogram[value] = 0
+								histogram[value] += 1 
+
+						# is there a count > kernelsize*kernelsize ?
+						mostfrequent, firstcount = 0,0
+						secondmost, secondcount = 0,0
+						for value, count in histogram.items():
+							if count > firstcount or (count == firstcount and value > mostfrequent):
+								secondmost, secondcount = mostfrequent, firstcount
+								mostfrequent, firstcount = value, count
+							
+						values = sorted(values)
+						height = values[len(values)//2]
+						# more than 16 of one is dead simple
+						if firstcount >= kernelsize * kernelsize:
+							height = mostfrequent
+
+						#if firstcount != 64:
+							#print(f"{firstcount, height, str(histogram)}")
+						heights.append(height)
+
 			# So what nearest neightbour is actually doing in this case, is its trying to sample the
 			# highres heightmap at exactly the texel positions on an 8x8 grid, to make it as close as possible
 			# with the texture and the heightmap. This is best used for stuff that has non-natural features
@@ -1345,7 +1379,7 @@ if __name__ == "__main__":
 	parser.add_argument('-v', '--nvdxt_options', help='|NVDXT| compression options ', default='-Sinc -quality_highest')
 
 	parser.add_argument('--highresheightmapfilter',
-						help='Which filter to use when downsampling highres heightmap: [lanczos, bilinear, nearest, median] ',
+						help='Which filter to use when downsampling highres heightmap: [lanczos, bilinear, nearest, median, histogram] ',
 						default="nearest", type = str)
 
 	parser.add_argument('-c', '--dirty',
