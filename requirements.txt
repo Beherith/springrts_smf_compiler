@@ -1,4 +1,0 @@
-# argparseui is modified, so it was vendored and included in this repo
-Pillow
-pypng
-pyqt5
