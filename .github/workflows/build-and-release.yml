@@ -12,7 +12,7 @@ pull_request:
 jobs:
   validate_release_version:
     runs-on: ubuntu-latest
-    if: ${{ !startsWith(github.event.head_commit.message, 'no-ci:') }}
+    if: ${{ !startsWith(github.event.head_commit.message, 'noci:') }}
     outputs:
       version: ${{ steps.write_output.outputs.version }}
       tag_name: ${{ steps.write_output.outputs.tag_name }}
