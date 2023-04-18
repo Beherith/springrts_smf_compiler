@@ -2,12 +2,10 @@ name: CI/CD
 
 on:
   push:
-    branches:
-      - "master"
+    branches: [ "master" ]
 
-pull_request:
-    branches:
-      - "master"
+  pull_request:
+    branches: [ "master" ]
 
 jobs:
   validate_release_version:
