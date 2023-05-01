@@ -7,8 +7,6 @@ on:
 jobs:
   validate_release_version:
     runs-on: ubuntu-latest
-    outputs:
-      tag_name: ${{ steps.write_output.outputs.tag_name }}
     steps:
       - uses: actions/checkout@v3
 
