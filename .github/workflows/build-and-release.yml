@@ -174,4 +174,3 @@ jobs:
           files: |
             pymapconv.v${{ needs.validate_release_version.outputs.version }}.linux-amd64.tar.gz
             pymapconv.v${{ needs.validate_release_version.outputs.version }}.windows-amd64.zip
-
