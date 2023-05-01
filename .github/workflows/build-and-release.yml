@@ -2,7 +2,7 @@ name: CI/CD
 
 on:
   push:
-    paths-ignore: [ "**/*.md", "map_samples/", "pymapconv_gui.png" ]
+    paths-ignore: [ "**/*.md", "map_samples/", "doc/", "pymapconv_gui.png" ]
     branches: [ "master" ]
 
 jobs:

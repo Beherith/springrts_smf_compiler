@@ -10,7 +10,7 @@ Miraculously self documenting.
 
 Read my guide on how to actually make maps for Spring: https://docs.google.com/document/d/1PL8U2bf-c5HuSVAihdldDTBA5fWKoeHKNb130YDdd-w/edit#
 
-![gooey](https://raw.githubusercontent.com/Beherith/springrts_smf_compiler/master/pymapconv_gui.png)
+![gooey](https://raw.githubusercontent.com/Beherith/springrts_smf_compiler/master/doc/pymapconv_gui.png)
 
 ## NEW FEATURES:
 
@@ -38,7 +38,6 @@ Added NVTT_DragAndDropConvertToDDSTools.7z, a set of tools for very easy convers
 - Metal map is resized with bilinear filtering
 - More verbose and informative output
 - Works from anywhere (it is no longer required to copy into the maps working directory)
-
 
 ## Usage:
 
