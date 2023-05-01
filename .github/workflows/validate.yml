@@ -2,7 +2,10 @@ name: Validate
 
 on:
   pull_request:
-    paths-ignore: [ "**/*.md", "map_samples/", "doc/", "pymapconv_gui.png" ]
+    paths-ignore:
+      - "README.md"
+      - "doc/**"
+      - "map_samples/**"
 
 jobs:
   validate_release_version:
