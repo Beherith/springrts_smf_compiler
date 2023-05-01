@@ -16,7 +16,7 @@ be produced. It is recommended that you follow a [feature branch workflow](https
 even in your local repository to verify your release before you merge it into the main repo.
 
 ## Testing the build
-You will need some additional dependencies to package compiler. Install additional dependencies listed in
+You will need some additional dependencies to package the compiler. Install additional dependencies listed in
 `build/requirements-dev.txt`. You can then run the build scripts:
 ```
 # Navigate your shell or command prompt into this repo's build directory
@@ -29,3 +29,6 @@ python3 -m pip install -r requirements-dev.txt
 cd linux
 ./build.sh
 ```
+
+This will produce a `/bin` directory in the root of the repository which contains the one-file executable. Test it 
+before making a pull request to merge.
