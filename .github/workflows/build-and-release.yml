@@ -2,11 +2,12 @@ name: CI/CD
 
 on:
   push:
+    branches:
+      - "master"
     paths-ignore:
       - "README.md"
       - "doc/**"
       - "map_samples/**"
-    branches: [ "master" ]
 
 jobs:
   validate_release_version:

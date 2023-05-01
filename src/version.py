@@ -6,11 +6,13 @@ import sys
 # In case of breaking changes, bump the MAJOR
 __VERSION__ = "0.5.1"
 
-
 # Update this string to add some notes to the GitHub release.
 __VERSION_DESC__ = """
-    - Add CI/CD pipelines to skip CI actions on PRs when only documentation is updated.
-    - Add simple release description system.
+    - Improvements to CI/CD
+    - Documentation updates should not trigger CI/CD anymore
+    - Cleanup on documentation
+    - Lightweight CI pipeline for Pull Requests
+    - Simple release description system
 """
 
 if __name__ == "__main__":
