@@ -2,10 +2,12 @@ name: CI/CD
 
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
-  workflow_dispatch:
+    branches:
+      - "master"
+    paths-ignore:
+      - "README.md"
+      - "doc/**"
+      - "map_samples/**"
 
 jobs:
   validate_release_version:
@@ -13,15 +15,18 @@ jobs:
     outputs:
       version: ${{ steps.write_output.outputs.version }}
       tag_name: ${{ steps.write_output.outputs.tag_name }}
+      package_desc: ${{ steps.write_output.outputs.package_desc }}
     steps:
       - uses: actions/checkout@v3
 
       - name: Determine Version
         id: get_version
         run: |
-          package_version=$(python ./src/version.py)
+          package_version=$(python ./src/version.py --version)
+          package_desc=$(python ./src/version.py --description)
           echo "package_version=$package_version" >> $GITHUB_ENV
           echo "tag_name=v$package_version" >> $GITHUB_ENV
+          echo "package_desc=$package_desc" >> $GITHUB_ENV
 
       - uses: mukunku/tag-exists-action@v1.2.0
         id: check_tag
@@ -37,6 +42,7 @@ jobs:
           else
             echo "tag_name=${{ env.tag_name }}" >> $GITHUB_OUTPUT
             echo "version=${{ env.package_version }}" >> $GITHUB_OUTPUT
+            echo "package_desc=${{ env.package_desc }}" >> $GITHUB_OUTPUT
           fi
 
   build_linux:
@@ -164,8 +170,7 @@ jobs:
           name: v${{ needs.validate_release_version.outputs.version }}
           tag_name: ${{ needs.validate_release_version.outputs.tag_name }}
           prerelease: false
-          body: PyMapConv v${{ needs.validate_release_version.outputs.version }}
+          body: v${{ needs.validate_release_version.outputs.package_desc }}
           files: |
             pymapconv.v${{ needs.validate_release_version.outputs.version }}.linux-amd64.tar.gz
             pymapconv.v${{ needs.validate_release_version.outputs.version }}.windows-amd64.zip
-
