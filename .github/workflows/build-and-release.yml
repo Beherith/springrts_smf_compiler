@@ -26,7 +26,10 @@ jobs:
           package_desc=$(python ./src/version.py --description)
           echo "package_version=$package_version" >> $GITHUB_ENV
           echo "tag_name=v$package_version" >> $GITHUB_ENV
-          echo "package_desc=$package_desc" >> $GITHUB_ENV
+          
+          echo "package_desc<<EOF" >> $GITHUB_ENV
+          echo "$package_desc" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - uses: mukunku/tag-exists-action@v1.2.0
         id: check_tag
@@ -42,7 +45,10 @@ jobs:
           else
             echo "tag_name=${{ env.tag_name }}" >> $GITHUB_OUTPUT
             echo "version=${{ env.package_version }}" >> $GITHUB_OUTPUT
-            echo "package_desc=${{ env.package_desc }}" >> $GITHUB_OUTPUT
+            
+            echo "package_desc<<EOF" >> $GITHUB_OUTPUT
+            echo "${{ env.package_desc }}" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
           fi
 
   build_linux:
