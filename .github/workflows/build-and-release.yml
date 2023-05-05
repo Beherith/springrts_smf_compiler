@@ -176,7 +176,7 @@ jobs:
           name: v${{ needs.validate_release_version.outputs.version }}
           tag_name: ${{ needs.validate_release_version.outputs.tag_name }}
           prerelease: false
-          body: v${{ needs.validate_release_version.outputs.package_desc }}
+          body: ${{ needs.validate_release_version.outputs.package_desc }}
           files: |
             pymapconv.v${{ needs.validate_release_version.outputs.version }}.linux-amd64.tar.gz
             pymapconv.v${{ needs.validate_release_version.outputs.version }}.windows-amd64.zip
