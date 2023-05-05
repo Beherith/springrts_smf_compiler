@@ -10,15 +10,24 @@ on:
 jobs:
   validate_release_version:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.write_output.outputs.version }}
+      tag_name: ${{ steps.write_output.outputs.tag_name }}
+      package_desc: ${{ steps.write_output.outputs.package_desc }}
     steps:
       - uses: actions/checkout@v3
 
       - name: Determine Version
         id: get_version
         run: |
-          package_version=$(python ./src/version.py)
+          package_version=$(python ./src/version.py --version)
+          package_desc=$(python ./src/version.py --description)
+          echo "package_version=$package_version" >> $GITHUB_ENV
           echo "tag_name=v$package_version" >> $GITHUB_ENV
-
+          
+          echo "package_desc<<EOF" >> $GITHUB_ENV
+          echo "$package_desc" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
       - uses: mukunku/tag-exists-action@v1.2.0
         id: check_tag
         with:
@@ -30,6 +39,13 @@ jobs:
           if [ ${{ steps.check_tag.outputs.exists }} = 'true' ]; then
            echo "Tag for this release already exists! Bump version in src/version.py"
            exit 1
+          else
+            echo "tag_name=${{ env.tag_name }}" >> $GITHUB_OUTPUT
+            echo "version=${{ env.package_version }}" >> $GITHUB_OUTPUT
+            
+            echo "package_desc<<EOF" >> $GITHUB_OUTPUT
+            echo "${{ env.package_desc }}" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
           fi
 
   build:
