@@ -1324,12 +1324,17 @@ if __name__ == "__main__":
 	parser.add_argument('-x', '--maxheight',
 						help='|MAXIMUM HEIGHT| <max height> (required) What altitude in spring the max(0xff for 8 bit images or 0xffff for 16bit images) level of the height map represents',
 						default=100.0, type=float)
+
 	parser.add_argument('-n', '--minheight',
 						help='|MINIMUM HEIGHT| <min height> (required) What altitude in spring the minimum level (0) of the height map represents',
 						default=-50.0, type=float)
+
+	executable_dir = os.path.dirname(os.path.realpath(__file__))
+	geovent_default_path = os.path.join(executable_dir, 'resources/geovent.bmp')
+
 	parser.add_argument('-g', '--geoventfile',
 						help='|GEOVENT DECAL| <geovent.bmp> The decal for geothermal vents; appears on the compiled map at each vent. Custom geovent decals should use all white as transparent, clear this if you do not wish to have geovents drawn.',
-						default='./resources/geovent.bmp', type=str)
+						default=geovent_default_path, type=str)
 	# parser.add_argument('-c', '--compress', help =  '<compression> How much we should try to compress the texture map. Values between [0;1] lower values make higher quality, larger files. [NOT IMPLEMENTED YET]',  default = 0.0, type = float )
 
 	# parser.add_argument('-i', '--invert', help = 'Flip the height map image upside-down on reading.', default = False, action='store_true' )
