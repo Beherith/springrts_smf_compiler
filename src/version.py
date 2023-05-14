@@ -4,15 +4,11 @@ import sys
 # In case of minor updates or bug-fixes, bump the PATCH
 # In case of new features which are backwards compatible with the old version, bump the MINOR
 # In case of breaking changes, bump the MAJOR
-__VERSION__ = "0.5.2"
+__VERSION__ = "0.5.3"
 
 # Update this string to add some notes to the GitHub release.
 __VERSION_DESC__ = """
-    - Improvements to CI/CD
-    - Documentation updates should not trigger CI/CD anymore
-    - Cleanup on documentation
-    - Lightweight CI pipeline for Pull Requests
-    - Simple release description system
+    - Fix Compressonator CLI arguments to produce appropriately-sized files
 """
 
 if __name__ == "__main__":
@@ -22,4 +18,3 @@ if __name__ == "__main__":
         print(__VERSION_DESC__.lstrip("\n").rstrip())
     elif action == "--version":
         print(__VERSION__)
-
