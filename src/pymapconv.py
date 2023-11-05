@@ -330,7 +330,7 @@ class MetalMap():
 		newdata = [0]*(self.h*self.w) 
 		for spot in self.spots:
 			for pixel in spot.pixels:
-				newdata[pixel[0] + pixel[1]*self.w] = pixel[2]
+				newdata[pixel[0]*self.w + pixel[1]] = pixel[2]
 		return newdata
 				
 def compileSMF(myargs):
