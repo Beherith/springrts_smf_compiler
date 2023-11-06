@@ -445,13 +445,13 @@ def compileSMF(myargs):
 	if myargs.minimap:
 		try:
 			minimapimage = Image.open(myargs.minimap)
-			minimapimage = minimapimage.resize((1024,1024), Image.ANTIALIAS)
+			minimapimage = minimapimage.resize((1024,1024), Image.LANCZOS)
 			print_flushed ("Opened custom minimap image "+ myargs.minimap+ " in mode "+ minimapimage.mode)
 		except:
 			print_flushed ("Failed to open minimap file name: %s, fallback using main texture" % myargs.minimap)
 
 	if minimapimage == None:
-		minimapimage = intex.resize((1024, 1024), Image.ANTIALIAS)
+		minimapimage = intex.resize((1024, 1024), Image.LANCZOS)
 
 	if minimapimage.mode == 'RGBA':
 		minimapfilename = os.path.join('temp', 'minimap.TIFF')
@@ -463,7 +463,7 @@ def compileSMF(myargs):
 	print_flushed("Saving minimap preview and thumbnail images as %s. + [JPG, PNG]"%(myargs.outfile[:-4]))
 	try:
 		minimapimage.save(myargs.outfile[:-4]+'.jpg', format = 'JPEG')
-		minimapimage = minimapimage.resize((128,128), Image.ANTIALIAS)
+		minimapimage = minimapimage.resize((128,128), Image.LANCZOS)
 		minimapimage.save(myargs.outfile[:-4]+'.png', format = 'PNG')
 	except Exception as e:
 		print_flushed("Failed to save minimap preview %s"%(str(e)))
