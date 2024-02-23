@@ -367,11 +367,25 @@ def compileSMF(myargs):
 				cmds.append('nvtt_export.exe --output "%s.dds" --save-flip-y --mip-filter 0 --quality 3 --format bc1 "%s"'%
 							 ( myargs.mapnormals[0:-4], myargs.mapnormals))
 			if myargs.specular:
+				spectexname = myargs.specular
+				if myargs.specularscale > 1:
+					specularimage = Image.open(spectexname)
+					specularimage = specularimage.resize((specularimage.size[0]//myargs.specularscale, specularimage.size[1]//myargs.specularscale),Image.LANCZOS)
+					spectexname = f"{spectexname[0:-4]}_{myargs.specularscale}.{spectexname[-3:]}"
+					specularimage.save(spectexname)
+					specularimage.close()
 				cmds.append('nvtt_export.exe --output "%s.dds" --save-flip-y --mip-filter 0 --quality 3 --format bc3 "%s"'%
-							 ( myargs.specular[0:-4], myargs.specular))
+							 ( spectexname[0:-4], spectexname))
 			if myargs.splatdistribution:
+				splatdistributionname = myargs.splatdistribution
+				if myargs.splatdistributionscale > 1:
+					splatdistributionimage = Image.open(splatdistributionname)
+					splatdistributionimage = splatdistributionimage.resize((splatdistributionimage.size[0]//myargs.splatdistributionscale, splatdistributionimage.size[1]//myargs.splatdistributionscale),Image.LANCZOS)
+					splatdistributionname = f"{splatdistributionname[0:-4]}_{myargs.splatdistributionscale}.{splatdistributionname[-3:]}"
+					splatdistributionimage.save(splatdistributionname)
+					splatdistributionimage.close()
 				cmds.append('nvtt_export.exe --output "%s.dds" --save-flip-y --mip-filter 0 --quality 3 --format bc3 "%s"'%
-							 ( myargs.splatdistribution[0:-4], myargs.splatdistribution))
+							 ( splatdistributionname[0:-4], splatdistributionname))
 			cmds.append("echo nvtt_export jobs complete")
 			encoding = 'latin1'
 			nvtt_jobs = subprocess.Popen('cmd.exe', stdin=subprocess.PIPE,
@@ -1362,10 +1376,17 @@ if __name__ == "__main__":
 	parser.add_argument('-z', '--specular',
 						help='|SPECULAR| Compress and flip the map-wide specular to RGBA .dds. Must be <= 16k * 16k sized (Windows only)',
 						type=str)
+	parser.add_argument('--specularscale',
+						help='|SPECULARSCALE| Downscale the specular map by a factor, where 2 is half.  (Windows only)',
+						type=int, default = 1)
 
 	parser.add_argument('-w', '--splatdistribution',
 						help='|SPLATDISTRIBUTION| Compress and flip the splat distribution map to RGBA .dds. Must be <= 16k * 16k sized (Windows only)',
 						type=str)
+	
+	parser.add_argument('--splatdistributionscale',
+						help='|SPLATDISTRIBUTION SCALE| Downscale the splat distribution map by a factor, where 2 is half. (Windows only)',
+						type=int, default = 1)
 
 	parser.add_argument('-q', '--numthreads',
 						help='|MULTITHREAD| <numthreads> How many threads to use for main compression job (default 4, Windows only)',
