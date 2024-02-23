@@ -17,6 +17,8 @@ import math
 import gc
 
 from PIL import Image
+Image.MAX_IMAGE_PIXELS = 933120000
+
 from version import __VERSION__
 
 start_time = time.time()
