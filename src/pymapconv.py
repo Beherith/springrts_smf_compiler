@@ -332,7 +332,46 @@ class MetalMap():
 			for pixel in spot.pixels:
 				newdata[pixel[0]*self.w + pixel[1]] = pixel[2]
 		return newdata
-				
+
+def resize_rgba_image(image_path, factor, resample=Image.LANCZOS):
+	"""
+	Opens an RGBA image, separates the color and alpha channels, resizes them individually, 
+	then combines the image back into RGBA format.
+	
+	Parameters:
+	- image_path: Path to the input image.
+	- factor: divide image by x
+	- resample: The resampling filter to use for resizing.
+	
+	Returns:
+	- A PIL Image object in RGBA format with the specified size.
+	"""
+	if factor <= 1:
+		return image_path
+	# Open the image
+	img = Image.open(image_path).convert('RGBA')
+	
+	new_size = (img.size[0]//factor, img.size[1]//factor)
+	
+	# Separate the color and alpha channels
+	rgb, a = img.split()[0:3], img.split()[3]
+	
+	# Combine the RGB channels back into an RGB image
+	rgb_img = Image.merge('RGB', rgb)
+	
+	# Resize the color and alpha channels individually
+	rgb_resized = rgb_img.resize(new_size, resample=resample)
+	a_resized = a.resize(new_size, resample=resample)
+	
+	# Combine the resized color and alpha channels back into an RGBA image
+	rgba_resized = Image.merge('RGBA', (*rgb_resized.split(), a_resized))
+
+	smallfilename = f"{image_path[0:-4]}_{factor}.{image_path[-3:]}"
+	rgba_resized.save(smallfilename)
+	rgba_resized.close()
+	img.close()
+	return smallfilename
+
 def compileSMF(myargs):
 	global start_time
 	start_time = time.time()
@@ -367,23 +406,11 @@ def compileSMF(myargs):
 				cmds.append('nvtt_export.exe --output "%s.dds" --save-flip-y --mip-filter 0 --quality 3 --format bc1 "%s"'%
 							 ( myargs.mapnormals[0:-4], myargs.mapnormals))
 			if myargs.specular:
-				spectexname = myargs.specular
-				if myargs.specularscale > 1:
-					specularimage = Image.open(spectexname)
-					specularimage = specularimage.resize((specularimage.size[0]//myargs.specularscale, specularimage.size[1]//myargs.specularscale),Image.LANCZOS)
-					spectexname = f"{spectexname[0:-4]}_{myargs.specularscale}.{spectexname[-3:]}"
-					specularimage.save(spectexname)
-					specularimage.close()
+				spectexname = resize_rgba_image(myargs.specular, myargs.specularscale, resample=Image.LANCZOS)
 				cmds.append('nvtt_export.exe --output "%s.dds" --save-flip-y --mip-filter 0 --quality 3 --format bc3 "%s"'%
 							 ( spectexname[0:-4], spectexname))
 			if myargs.splatdistribution:
-				splatdistributionname = myargs.splatdistribution
-				if myargs.splatdistributionscale > 1:
-					splatdistributionimage = Image.open(splatdistributionname)
-					splatdistributionimage = splatdistributionimage.resize((splatdistributionimage.size[0]//myargs.splatdistributionscale, splatdistributionimage.size[1]//myargs.splatdistributionscale),Image.LANCZOS)
-					splatdistributionname = f"{splatdistributionname[0:-4]}_{myargs.splatdistributionscale}.{splatdistributionname[-3:]}"
-					splatdistributionimage.save(splatdistributionname)
-					splatdistributionimage.close()
+				splatdistributionname = resize_rgba_image(myargs.splatdistribution, myargs.splatdistributionscale, resample=Image.LANCZOS)
 				cmds.append('nvtt_export.exe --output "%s.dds" --save-flip-y --mip-filter 0 --quality 3 --format bc3 "%s"'%
 							 ( splatdistributionname[0:-4], splatdistributionname))
 			cmds.append("echo nvtt_export jobs complete")
