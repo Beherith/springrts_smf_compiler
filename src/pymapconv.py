@@ -519,7 +519,7 @@ def compileSMF(myargs):
 		cmd = 'nvdxt.exe -file %s -%s -nmips 9 -output temp/minimap.dds -Sinc -quality_highest' % (minimapfilename,compressionmethod)
 		print_flushed (cmd)
 		if numthreads > 1:
-			minimapthread = subprocess.Popen(cmd.split(' '))
+			minimapthread = subprocess.Popen(cmd.split(' '), shell=True)
 		else:
 			os.system(cmd)
 
@@ -903,7 +903,9 @@ def compileSMF(myargs):
 			tiley + 1)))  # The box is a 4-tuple defining the left, upper, right, and lower pixel coordinate.
 
 			if numthreads > 1:
-				newtile.save(os.path.join('temp', "thread%i"%(tileindex % numthreads), 'temp%i.%s' % (tileindex, extension)), format = extension)
+				directory = os.path.join('temp', "thread%i"%(tileindex % numthreads))
+				os.makedirs(directory, exist_ok=True)  # Create directory if not exists
+				newtile.save(os.path.join(directory, 'temp%i.%s' % (tileindex, extension)), format = extension)
 			else:
 				newtile.save(os.path.join('temp', 'temp%i.%s' % (tileindex, extension)), format = extension)
 	print_flushed ('')
@@ -932,18 +934,17 @@ def compileSMF(myargs):
 				os.system(cmd)
 		else:
 			threads = []
+			nvdxt_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'build', 'win', 'nvdxt.exe'))
 			for i in range(numthreads):
-				cmd = '%snvdxt.exe -file temp\\%stemp*.%s -%s -outsamedir -nmips 4 %s' % (
-					'temp\\thread%d\\' % i,
-					'thread%d\\' % i,
-					extension,
-					compressionmethod,
-					'-Sinc -quality_highest' if myargs.nvdxt_options is None else 	myargs.nvdxt_options)
-				print_flushed('with the command: ', cmd)
-				threads.append(subprocess.Popen(cmd.split(' ')))
-				#os.system(cmd)
+				cmd = [nvdxt_path, '-file', os.path.join('temp', 'thread%d' % i, 'temp*.%s' % extension), '-%s' % compressionmethod, '-outsamedir', '-nmips', '4']
+				if myargs.nvdxt_options is None:
+					cmd += ['-Sinc', '-quality_highest']
+				else:
+					cmd += myargs.nvdxt_options.split(' ')
+				print_flushed('with the command: ', ' '.join(cmd))
+				threads.append(subprocess.Popen(cmd))
 			processing = True
-			while (any([thread.poll() is None for thread in threads])):
+			while any([thread.poll() is None for thread in threads]):
 				time.sleep(0.1)
 	def ReadTile(xpos, ypos, sourcebuf):  # xpos and ypos are multiples of 32
 		outtile = b''
@@ -976,7 +977,8 @@ def compileSMF(myargs):
 			tileindex = tiley * (springmapx // 2) + tilex
 
 			if numthreads > 1:
-				ddsfile = open(os.path.join('temp', 'thread%d'% (tileindex%numthreads),  'temp%i.dds' % (tileindex)), 'rb')
+				directory = os.path.join('temp', "thread%i"%(tileindex % numthreads))
+				ddsfile = open(os.path.join(directory, 'temp%i.dds' % (tileindex)), 'rb')
 			else:
 				ddsfile = open(os.path.join('temp', 'temp%i.dds' % (tileindex)), 'rb')
 				
