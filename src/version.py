@@ -4,7 +4,7 @@ import sys
 # In case of minor updates or bug-fixes, bump the PATCH
 # In case of new features which are backwards compatible with the old version, bump the MINOR
 # In case of breaking changes, bump the MAJOR
-__VERSION__ = "0.6.2"
+__VERSION__ = "0.6.3"
 
 # Update this string to add some notes to the GitHub release.
 __VERSION_DESC__ = """
