@@ -668,6 +668,7 @@ def compileSMF(myargs):
 			print_flushed ('Error: Incorrect %s heightmap dimensions of (%ix%i), image size should be exactly %ix%i for a spring map size of (%ix%i)' % (
 				myargs.heightmap, otherheight.size[0], otherheight.size[1], mapx + 1, mapy + 1, springmapx, springmapy))
 			return -1
+		print_flushed('Heightmap image dimensions are  %ix%i, channels: %i'%(otherheight.size[0],otherheight.size[1],len(otherheight_pixels[0, 0])))
 		for row in range(otherheight.size[1]):
 			for col in range(otherheight.size[0]):
 				numchannels = 1
@@ -675,7 +676,11 @@ def compileSMF(myargs):
 					numchannels = len(otherheight_pixels[col, row])
 				except:
 					pass
-				heights.append(sum(otherheight_pixels[col, row]) * 255 // numchannels)
+				if numchannels == 1:
+					heights.append(otherheight_pixels[col, row] * 255)
+				else:
+					heights.append(sum(otherheight_pixels[col, row]) * 255 // numchannels)
+					
 
 	# open metalmap:
 	metalmap = []
